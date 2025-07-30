@@ -175,25 +175,21 @@
       right: 5px; /* Position from the right edge of the container */
       top: 50%;
       transform: translateY(-50%);
-      /* Liquid Glass Effect */
-      background: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
-      backdrop-filter: blur(8px); /* Blur effect */
-      border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); /* Subtle shadow */
-      border-radius: 6px; /* Slightly smaller radius for better fit */
-      padding: 0.5rem 0.75rem; /* Smaller padding for icon button */
+      background: transparent; /* No background */
+      border: none; /* No border */
+      box-shadow: none; /* No shadow */
+      border-radius: 6px; /* Still apply border-radius for click area */
+      padding: 0.5rem 0.75rem; /* Padding for click area */
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s ease, opacity 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      transition: background 0.3s ease, opacity 0.3s ease;
       z-index: 10; /* Ensure button is above input text */
     }
 
     .copy-button:hover {
-      background: rgba(255, 255, 255, 0.25); /* Slightly more opaque on hover */
-      border-color: rgba(255, 255, 255, 0.3);
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.1); /* Subtle background on hover */
     }
 
     .copy-button svg {
@@ -253,7 +249,7 @@
       display: flex;
       align-items: center;
       border-top: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
-      justify-content: center; /* Center content horizontally */
+      justify-content: flex-start; /* Aligned to the left */
       padding: 0 1rem; /* Add some padding */
     }
 
