@@ -24,7 +24,10 @@
       const pathParts = window.location.pathname.split("/");
       const type = pathParts[1];
       const tmdbId = pathParts[2];
-      if (!tmdbId) return document.body.innerHTML = '<h1 style="color:white;text-align:center">Invalid TMDB ID</h1>';
+      if (!tmdbId || !["movie", "tv"].includes(type)) {
+        document.body.innerHTML = '<h1 style="color:white;text-align:center">Invalid TMDB ID or type</h1>';
+        return;
+      }
 
       try {
         const tmdbRes = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=37ecb5730cb4604593f261a4bbb4127d`);
@@ -32,6 +35,7 @@
         const title = tmdbData.title || tmdbData.name;
         const year = (tmdbData.release_date || tmdbData.first_air_date || '').split('-')[0];
         const fullTitle = year ? `${title}.${year}` : title;
+
         const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(fullTitle)}`);
         const { result } = await apiRes.json();
         const file = result?.files?.[0];
@@ -40,7 +44,8 @@
           const src = `https://watchout.rpmvid.com/#${file.file_code}`;
           document.body.innerHTML = `<iframe src="${src}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         } else {
-          document.body.innerHTML = `<iframe sandbox="allow-scripts allow-same-origin" src="https://videasy.to/e/${tmdbId}.html" allowfullscreen></iframe>`;
+          const fallback = `https://player.videasy.net/${type}/tmdb/${tmdbId}`;
+          document.body.innerHTML = `<iframe sandbox="allow-scripts allow-same-origin" src="${fallback}" allowfullscreen></iframe>`;
         }
       } catch (err) {
         document.body.innerHTML = '<h1 style="color:white;text-align:center">Something went wrong</h1>';
