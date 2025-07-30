@@ -38,7 +38,7 @@
       }
 
       try {
-        const tmdbRes = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=37ecb5730cb4604593f261a4bbb4127d`);
+        const tmdbRes = await fetch(`https://search-proxy.watchoutofficial2006.workers.dev/${type}/${tmdbId}`);
         const tmdbData = await tmdbRes.json();
         const rawTitle = tmdbData.title || tmdbData.name;
         const title = sanitizeTitle(rawTitle);
