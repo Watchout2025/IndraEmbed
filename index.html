@@ -30,7 +30,9 @@
         const tmdbRes = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=37ecb5730cb4604593f261a4bbb4127d`);
         const tmdbData = await tmdbRes.json();
         const title = tmdbData.title || tmdbData.name;
-        const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(title)}`);
+        const year = (tmdbData.release_date || tmdbData.first_air_date || '').split('-')[0];
+        const fullTitle = year ? `${title}.${year}` : title;
+        const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(fullTitle)}`);
         const { result } = await apiRes.json();
         const file = result?.files?.[0];
 
