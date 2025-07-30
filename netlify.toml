@@ -5,10 +5,10 @@
 
 [[redirects]]
   from = "/movie/:id"
-  to = "/index.html"
+  to = "/player.html"
   status = 200
 
 [[redirects]]
   from = "/tv/:id/:season/:episode"
-  to = "/index.html"
+  to = "/player.html"
   status = 200
