@@ -3,88 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indra Embed Player</title>
+  <title>Indra Embed</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      background: #000;
-      font-family: Arial, sans-serif;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    #player-container {
-      width: 100%;
-      max-width: 960px;
-      aspect-ratio: 16 / 9;
-      background: #111;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      padding: 0;
+      height: 100%;
+      background-color: #000;
     }
     iframe {
-      width: 100%;
-      height: 100%;
       border: none;
-      background: #000;
-    }
-    #loading {
-      position: absolute;
-      color: white;
-      font-size: 18px;
+      width: 100vw;
+      height: 100vh;
     }
   </style>
 </head>
 <body>
-  <div id="player-container">
-    <div id="loading">Loading player...</div>
-  </div>
-
   <script>
-    const API_KEY = "37ecb5730cb4604593f261a4bbb4127d";
-    const container = document.getElementById("player-container");
-    const loading = document.getElementById("loading");
-
-    async function init() {
+    async function loadPlayer() {
       const pathParts = window.location.pathname.split("/");
-      const type = pathParts[1]; // 'movie' or 'tv'
+      const type = pathParts[1];
       const tmdbId = pathParts[2];
-
-      if (!tmdbId || !type) {
-        loading.innerText = "Invalid URL format.";
-        return;
-      }
+      if (!tmdbId) return document.body.innerHTML = '<h1 style="color:white;text-align:center">Invalid TMDB ID</h1>';
 
       try {
-        const tmdbUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${API_KEY}`;
-        const res = await fetch(tmdbUrl);
-        const data = await res.json();
+        const tmdbRes = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=37ecb5730cb4604593f261a4bbb4127d`);
+        const tmdbData = await tmdbRes.json();
+        const title = tmdbData.title || tmdbData.name;
+        const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(title)}`);
+        const { result } = await apiRes.json();
+        const file = result?.files?.[0];
 
-        let title = data.title || data.name || "";
-        let slug = title.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
-
-        const workerUrl = `https://hlsworker.watchoutofficial2006.workers.dev/?title=${slug}`;
-        const workerRes = await fetch(workerUrl);
-        const workerData = await workerRes.json();
-
-        if (workerData?.result?.files?.[0]?.file_code) {
-          const fileCode = workerData.result.files[0].file_code;
-          const embedUrl = `https://watchout.rpmvid.com/#${fileCode}`;
-
-          container.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+        if (file && file.file_code) {
+          const src = `https://watchout.rpmvid.com/#${file.file_code}`;
+          document.body.innerHTML = `<iframe src="${src}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         } else {
-          container.innerHTML = `<iframe sandbox="allow-scripts allow-same-origin" src="https://videasy.to/embed/${tmdbId}" allowfullscreen></iframe>`;
+          document.body.innerHTML = `<iframe sandbox="allow-scripts allow-same-origin" src="https://videasy.to/e/${tmdbId}.html" allowfullscreen></iframe>`;
         }
-      } catch (e) {
-        container.innerHTML = `<p style='color: red;'>Failed to load player.</p>`;
-        console.error(e);
+      } catch (err) {
+        document.body.innerHTML = '<h1 style="color:white;text-align:center">Something went wrong</h1>';
       }
     }
 
-    init();
+    loadPlayer();
   </script>
 </body>
 </html>
