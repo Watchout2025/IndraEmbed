@@ -63,8 +63,8 @@
           document.body.innerHTML = `<iframe src="${src}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         } else {
           const fallback = type === 'tv' && season && episode
-            ? `https://player.videasy.net/tv/tmdb/${tmdbId}/${season}/${episode}`
-            : `https://player.videasy.net/${type}/tmdb/${tmdbId}`;
+            ? `https://player.videasy.net/tv/${tmdbId}/${season}/${episode}`
+            : `https://player.videasy.net/${type}/${tmdbId}`;
           document.body.innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         }
       } catch (err) {
