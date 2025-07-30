@@ -3,110 +3,152 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indra Embed Player</title>
+  <title>Indra Embed - Multi Audio Player</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #000;
-      color: #fff;
+      background: #0f0f0f;
+      color: white;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 1rem 2rem;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      text-align: center;
+      z-index: 999;
     }
-
-    .logo {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #e50914;
-      margin-top: 2rem;
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
     }
-
-    .subtitle {
-      font-size: 1.2rem;
-      color: #aaa;
-      margin: 1rem 0 2rem;
+    nav a {
+      color: white;
+      margin-left: 1.5rem;
+      text-decoration: none;
+      font-weight: 500;
     }
-
-    .input-section {
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    .tabs {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
       justify-content: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
     }
-
-    input {
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      width: 250px;
-      font-size: 1rem;
-    }
-
-    button {
-      background-color: #e50914;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
+    .tab {
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
       border-radius: 5px;
       cursor: pointer;
-      font-size: 1rem;
+      background: #222;
+      border: 1px solid #444;
     }
-
-    button:hover {
-      background-color: #b00710;
+    .tab.active {
+      background: red;
+      color: white;
+      border-color: red;
     }
-
-    .demo-player {
+    input {
       width: 100%;
-      max-width: 900px;
-      aspect-ratio: 16 / 9;
-      margin-bottom: 3rem;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      border: 1px solid #444;
+      background: #1a1a1a;
+      color: white;
+    }
+    iframe {
+      width: 100%;
+      height: 500px;
       border: none;
       border-radius: 10px;
+      margin-top: 2rem;
     }
-
-    footer {
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-      color: #666;
+    .description {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 2rem;
     }
   </style>
 </head>
 <body>
-  <div class="logo">Indra Embed</div>
-  <div class="subtitle">World's first multi-audio movie & TV embed player</div>
-  <div class="input-section">
-    <input type="text" id="urlInput" placeholder="Enter TMDB movie or series URL...">
-    <button onclick="redirect()">Watch Now</button>
+  <header>
+    <h1>Indra Embed</h1>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">Player</a>
+      <a href="#">Docs</a>
+    </nav>
+  </header>
+  <div class="container">
+    <div class="description">
+      <p><strong>Indra Embed</strong> is the first public player to support multi-audio movie & series embedding with a modern UI. Used by <strong>Watch Out</strong>, powered by <strong>Indra Group</strong>.</p>
+    </div>
+    <div class="tabs">
+      <div class="tab active" id="movieTab">Movie</div>
+      <div class="tab" id="tvTab">TV Show</div>
+    </div>
+    <input type="text" id="tmdbInput" placeholder="Enter TMDB ID" value="299534" />
+    <input type="number" id="seasonInput" placeholder="Enter Season Number" style="display: none" />
+    <input type="number" id="episodeInput" placeholder="Enter Episode Number" style="display: none" />
+    <iframe id="embedFrame" src="/movie/299534"></iframe>
   </div>
-
-  <iframe
-    class="demo-player"
-    src="https://indraembed.netlify.app/tv/93405/1/1"
-    allowfullscreen>
-  </iframe>
-
-  <footer>Powered by Indra Group &mdash; Used in <strong>Watch Out</strong></footer>
-
   <script>
-    function redirect() {
-      const input = document.getElementById('urlInput').value.trim();
-      const match = input.match(/(movie|tv)\/(\d+)(?:.*?[?&]season=(\d+))?(?:.*?[?&]episode=(\d+))?/);
-      if (match) {
-        const [, type, id, season, episode] = match;
-        let url = `/${type}/${id}`;
-        if (type === 'tv' && season && episode) {
-          url += `/${season}/${episode}`;
-        }
-        window.location.href = url;
+    const movieTab = document.getElementById('movieTab');
+    const tvTab = document.getElementById('tvTab');
+    const tmdbInput = document.getElementById('tmdbInput');
+    const seasonInput = document.getElementById('seasonInput');
+    const episodeInput = document.getElementById('episodeInput');
+    const embedFrame = document.getElementById('embedFrame');
+
+    let selectedType = 'movie';
+
+    function updateFrame() {
+      const id = tmdbInput.value.trim();
+      if (!id) return;
+      if (selectedType === 'movie') {
+        embedFrame.src = `/movie/${id}`;
       } else {
-        alert("Invalid TMDB URL format.");
+        const season = seasonInput.value.trim();
+        const episode = episodeInput.value.trim();
+        if (!season || !episode) return;
+        embedFrame.src = `/tv/${id}/${season}/${episode}`;
       }
     }
+
+    movieTab.onclick = () => {
+      selectedType = 'movie';
+      movieTab.classList.add('active');
+      tvTab.classList.remove('active');
+      seasonInput.style.display = 'none';
+      episodeInput.style.display = 'none';
+      tmdbInput.value = '299534';
+      updateFrame();
+    };
+
+    tvTab.onclick = () => {
+      selectedType = 'tv';
+      tvTab.classList.add('active');
+      movieTab.classList.remove('active');
+      seasonInput.style.display = 'block';
+      episodeInput.style.display = 'block';
+      tmdbInput.value = '93405';
+      seasonInput.value = '1';
+      episodeInput.value = '1';
+      updateFrame();
+    };
+
+    tmdbInput.oninput = updateFrame;
+    seasonInput.oninput = updateFrame;
+    episodeInput.oninput = updateFrame;
   </script>
 </body>
 </html>
