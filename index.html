@@ -3,148 +3,153 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indra Embed</title>
+  <title>Indra Embed - Multi Audio Player</title>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a0a0a;
+      background: #0f0f0f;
       color: white;
     }
     header {
       position: sticky;
       top: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
-      padding: 10px 20px;
-      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 999;
     }
-    header img {
-      height: 40px;
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
     }
     nav a {
-      margin: 0 10px;
       color: white;
+      margin-left: 1.5rem;
       text-decoration: none;
       font-weight: 500;
     }
     .container {
-      max-width: 800px;
-      margin: 40px auto;
-      text-align: center;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
     }
     .tabs {
       display: flex;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 1rem;
     }
     .tab {
-      padding: 10px 20px;
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
+      border-radius: 5px;
       cursor: pointer;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      color: white;
+      background: #222;
+      border: 1px solid #444;
     }
     .tab.active {
       background: red;
-    }
-    .input-group {
-      margin: 10px 0;
+      color: white;
+      border-color: red;
     }
     input {
-      width: 60%;
-      padding: 10px;
-      margin: 5px;
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
       border-radius: 5px;
-      border: none;
-      outline: none;
+      border: 1px solid #444;
       background: #1a1a1a;
       color: white;
     }
     iframe {
-      margin-top: 30px;
       width: 100%;
       height: 500px;
       border: none;
+      border-radius: 10px;
+      margin-top: 2rem;
+    }
+    .description {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 2rem;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="https://i.ibb.co/4RGYpphW/Indra-Embed.png" alt="Indra Embed Logo" />
+    <img style="height:25px; width:25px;" src="https://i.ibb.co/4RGYpphW/Indra-Embed.png" alt="Indra-Embed" border="0" />
+    <h1>Indra Embed</h1>
     <nav>
       <a href="#">Home</a>
       <a href="#">Player</a>
       <a href="#">Docs</a>
     </nav>
   </header>
-
   <div class="container">
+    <div class="description">
+      <p><strong>Indra Embed</strong> is the first public player to support multi-audio movie & series embedding with a modern UI. Used by <strong>Watch Out</strong>, powered by <strong>Indra Group</strong>.</p>
+    </div>
     <div class="tabs">
-      <div class="tab active" onclick="selectType('movie')">Movie</div>
-      <div class="tab" onclick="selectType('tv')">TV</div>
+      <div class="tab active" id="movieTab">Movie</div>
+      <div class="tab" id="tvTab">TV Show</div>
     </div>
-
-    <div class="input-group">
-      <input id="tmdbId" placeholder="Enter TMDB ID" />
-    </div>
-    <div class="input-group" id="tvInputs" style="display: none;">
-      <input id="season" placeholder="Season Number" />
-      <input id="episode" placeholder="Episode Number" />
-    </div>
-
-    <iframe id="playerFrame" allowfullscreen></iframe>
+    <input type="text" id="tmdbInput" placeholder="Enter TMDB ID" value="299534" />
+    <input type="number" id="seasonInput" placeholder="Enter Season Number" style="display: none" />
+    <input type="number" id="episodeInput" placeholder="Enter Episode Number" style="display: none" />
+    <iframe id="embedFrame" src="/movie/299534"></iframe>
   </div>
-
   <script>
-    let type = 'movie';
-    const tmdbIdInput = document.getElementById('tmdbId');
-    const seasonInput = document.getElementById('season');
-    const episodeInput = document.getElementById('episode');
-    const playerFrame = document.getElementById('playerFrame');
-    const tvInputs = document.getElementById('tvInputs');
+    const movieTab = document.getElementById('movieTab');
+    const tvTab = document.getElementById('tvTab');
+    const tmdbInput = document.getElementById('tmdbInput');
+    const seasonInput = document.getElementById('seasonInput');
+    const episodeInput = document.getElementById('episodeInput');
+    const embedFrame = document.getElementById('embedFrame');
 
-    function selectType(selected) {
-      type = selected;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => {
-        if (t.textContent.toLowerCase() === selected) t.classList.add('active');
-      });
+    let selectedType = 'movie';
 
-      if (type === 'tv') {
-        tvInputs.style.display = 'block';
-        tmdbIdInput.value = '93405';
-        seasonInput.value = '1';
-        episodeInput.value = '1';
-      } else {
-        tvInputs.style.display = 'none';
-        tmdbIdInput.value = '299534';
-      }
-      updatePlayer();
-    }
-
-    function updatePlayer() {
-      const id = tmdbIdInput.value;
+    function updateFrame() {
+      const id = tmdbInput.value.trim();
       if (!id) return;
-      if (type === 'movie') {
-        playerFrame.src = `/movie/${id}`;
+      if (selectedType === 'movie') {
+        embedFrame.src = `/movie/${id}`;
       } else {
-        const season = seasonInput.value;
-        const episode = episodeInput.value;
+        const season = seasonInput.value.trim();
+        const episode = episodeInput.value.trim();
         if (!season || !episode) return;
-        playerFrame.src = `/tv/${id}/${season}/${episode}`;
+        embedFrame.src = `/tv/${id}/${season}/${episode}`;
       }
     }
 
-    tmdbIdInput.addEventListener('input', updatePlayer);
-    seasonInput.addEventListener('input', updatePlayer);
-    episodeInput.addEventListener('input', updatePlayer);
+    movieTab.onclick = () => {
+      selectedType = 'movie';
+      movieTab.classList.add('active');
+      tvTab.classList.remove('active');
+      seasonInput.style.display = 'none';
+      episodeInput.style.display = 'none';
+      tmdbInput.value = '299534';
+      updateFrame();
+    };
 
-    // Initial load
-    selectType('movie');
+    tvTab.onclick = () => {
+      selectedType = 'tv';
+      tvTab.classList.add('active');
+      movieTab.classList.remove('active');
+      seasonInput.style.display = 'block';
+      episodeInput.style.display = 'block';
+      tmdbInput.value = '93405';
+      seasonInput.value = '1';
+      episodeInput.value = '1';
+      updateFrame();
+    };
+
+    tmdbInput.oninput = updateFrame;
+    seasonInput.oninput = updateFrame;
+    episodeInput.oninput = updateFrame;
   </script>
 </body>
 </html>
