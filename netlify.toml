@@ -1,0 +1,14 @@
+[[redirects]]
+  from = "/"
+  to = "/landing.html"
+  status = 200
+
+[[redirects]]
+  from = "/movie/:id"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tv/:id/:season/:episode"
+  to = "/index.html"
+  status = 200
