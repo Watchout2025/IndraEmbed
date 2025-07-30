@@ -64,8 +64,8 @@
         } else {
           const fallback = type === 'tv' && season && episode
             ? `https://player.videasy.net/tv/${tmdbId}/${season}/${episode}`
-            : `https://player.videasy.net/${type}/${tmdbId}`;
-          document.body.innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+            : `https://player.videasy.net/movie/${tmdbId}`;
+          document.body.innerHTML = `<iframe src="${fallback}" sandbox="allow-scripts allow-same-origin" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         }
       } catch (err) {
         document.body.innerHTML = '<h1 style="color:white;text-align:center">Something went wrong</h1>';
