@@ -20,6 +20,14 @@
 </head>
 <body>
   <script>
+    function sanitizeTitle(title) {
+      return title
+        .replace(/[^a-zA-Z0-9 ]/g, '') // remove special characters
+        .replace(/\s+/g, '.')         // replace spaces with dots
+        .replace(/\.{2,}/g, '.')      // remove consecutive dots
+        .trim();
+    }
+
     async function loadPlayer() {
       const pathParts = window.location.pathname.split("/").filter(Boolean);
       const [type, tmdbId, season, episode] = pathParts;
@@ -32,7 +40,8 @@
       try {
         const tmdbRes = await fetch(`https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=37ecb5730cb4604593f261a4bbb4127d`);
         const tmdbData = await tmdbRes.json();
-        const title = tmdbData.title || tmdbData.name;
+        const rawTitle = tmdbData.title || tmdbData.name;
+        const title = sanitizeTitle(rawTitle);
         const year = (tmdbData.release_date || tmdbData.first_air_date || '').split('-')[0];
 
         let fullTitle = title;
@@ -56,7 +65,7 @@
           const fallback = type === 'tv' && season && episode
             ? `https://player.videasy.net/tv/tmdb/${tmdbId}/${season}/${episode}`
             : `https://player.videasy.net/${type}/tmdb/${tmdbId}`;
-          document.body.innerHTML = `<iframe sandbox="allow-scripts allow-same-origin" src="${fallback}" allowfullscreen></iframe>`;
+          document.body.innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         }
       } catch (err) {
         document.body.innerHTML = '<h1 style="color:white;text-align:center">Something went wrong</h1>';
