@@ -4,147 +4,347 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Primary Meta Tags -->
-<title>Indra Embed – Multi-Audio Player for Movies & TV Shows</title>
-<meta name="title" content="Indra Embed – Multi-Audio Player for Movies & TV Shows">
-<meta name="description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="https://i.ibb.co/4RGYpphW/Indra-Embed.png" type="image/png">
+  <title>Indra Embed – Multi-Audio Player for Movies & TV Shows</title>
+  <meta name="title" content="Indra Embed – Multi-Audio Player for Movies & TV Shows">
+  <meta name="description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+  <link rel="icon" href="https://i.ibb.co/4RGYpphW/Indra-Embed.png" type="image/png">
 
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://indraembed.netlify.app/">
-<meta property="og:title" content="Indra Embed – Multi-Audio Player for Movies & TV Shows">
-<meta property="og:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
-<meta property="og:image" content="https://i.ibb.co/4RGYpphW/Indra-Embed.png">
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://indraembed.netlify.app/">
+  <meta property="og:title" content="Indra Embed – Multi-Audio Player for Movies & TV Shows">
+  <meta property="og:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+  <meta property="og:image" content="https://i.ibb.co/4RGYpphW/Indra-Embed.png">
 
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://indraembed.netlify.app/">
-<meta property="twitter:title" content="Indra Embed – Multi-Audio Player for Movies & TV Shows">
-<meta property="twitter:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
-<meta property="twitter:image" content="https://i.ibb.co/4RGYpphW/Indra-Embed.png">
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://indraembed.netlify.app/">
+  <meta property="twitter:title" content="Indra Embed – Multi-Audio Player for Movies & TV Shows">
+  <meta property="twitter:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+  <meta property="twitter:image" content="https://i.ibb.co/4RGYpphW/Indra-Embed.png">
 
   <style>
+    /* Basic Reset & Body Styles */
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #000;
       color: white;
+      line-height: 1.6;
     }
-    .text-xs {
-    color: #fff;
-    border-left: 1px solid #fff;
-    padding-left: 7px;
-}
-    @media (max-width: 1000px) {
-    .border-t {
-        margin-bottom: 60px;
-    }
-}
-    .space-x-2 {
-    display: flex
-;
-    align-items: center;
-    flex-direction: row;
-    gap: 7px;
-}
-    .h-4 {
-    height: 23px;
-    padding-top: 1px;
-}
-    .space-x-2 {
-    display: flex
-;
-    align-items: center;
-    flex-direction: row;
-    gap: 7px;
-}
-    @media (max-width: 1000px) {
-    .border-t {
-        margin-bottom: 60px;
-    }
-}
-    .border-t {
-    height: 70px;
-    margin: 0 3%;
-    display: flex
-;
-    align-items: center;
-    border-top: #fff 1px solid;
-}
+
+    /* Header Styling */
     header {
       position: sticky;
       top: 0;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 999;
+      flex-wrap: wrap; /* Allow wrapping on small screens */
     }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-logo {
+      height: 26px;
+      width: auto; /* Ensure aspect ratio is maintained */
+    }
+
     header h1 {
       margin: 0;
       font-size: 1.5rem;
+      white-space: nowrap; /* Prevent title from breaking */
     }
-    nav a {
+
+    header nav {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap; /* Allow nav items to wrap */
+    }
+
+    header nav a {
       color: white;
-      margin-left: 1.5rem;
       text-decoration: none;
       font-weight: 500;
+      transition: color 0.3s ease; /* Smooth transition for hover */
     }
+
+    header nav a:hover {
+      color: red; /* Highlight on hover */
+    }
+
+    /* Main Container */
     .container {
       max-width: 900px;
       margin: 2rem auto;
       padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem; /* Consistent spacing between elements */
     }
+
+    /* Description Text */
+    .description {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 1rem; /* Adjust margin for overall flow */
+    }
+
+    /* Tabs Styling */
     .tabs {
       display: flex;
       justify-content: center;
       margin-bottom: 1rem;
+      gap: 1rem; /* Space between tabs */
     }
+
     .tab {
-      padding: 0.5rem 1rem;
-      margin: 0 0.5rem;
-      border-radius: 5px;
+      padding: 0.75rem 1.5rem; /* Larger clickable area */
+      border-radius: 8px; /* More rounded corners */
       cursor: pointer;
       background: #222;
       border: 1px solid #444;
+      transition: background 0.3s ease, border-color 0.3s ease; /* Smooth transitions */
+      font-weight: 600;
+      text-align: center;
+      flex-grow: 1; /* Allow tabs to grow and fill space */
+      max-width: 150px; /* Limit max width for tabs */
     }
+
+    .tab:hover {
+      background: #333; /* Darker on hover */
+    }
+
     .tab.active {
       background: red;
       color: white;
       border-color: red;
     }
-    input {
+
+    /* Input Fields */
+    input[type="text"],
+    input[type="number"] {
       width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border-radius: 5px;
+      padding: 0.75rem; /* Larger padding */
+      border-radius: 8px; /* More rounded corners */
       border: 1px solid #444;
       background: #1a1a1a;
       color: white;
+      box-sizing: border-box; /* Include padding in width */
+      transition: border-color 0.3s ease; /* Smooth transition */
     }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: red; /* Highlight focus with red */
+    }
+
+    /* Embed URL Output Section */
+    .input-with-icon-container {
+      position: relative;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .embed-url-output {
+      width: 100%;
+      padding: 0.75rem 3.5rem 0.75rem 0.75rem; /* Adjusted padding for icon */
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #1a1a1a;
+      color: white;
+      box-sizing: border-box;
+      font-family: monospace; /* Use monospace for URLs */
+      overflow: hidden; /* Hide overflow text */
+      text-overflow: ellipsis; /* Add ellipsis for overflow */
+      white-space: nowrap; /* Prevent wrapping */
+    }
+
+    .copy-button {
+      position: absolute;
+      right: 5px; /* Position from the right edge of the container */
+      top: 50%;
+      transform: translateY(-50%);
+      /* Liquid Glass Effect */
+      background: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+      backdrop-filter: blur(8px); /* Blur effect */
+      border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+      border-radius: 6px; /* Slightly smaller radius for better fit */
+      padding: 0.5rem 0.75rem; /* Smaller padding for icon button */
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease, opacity 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      z-index: 10; /* Ensure button is above input text */
+    }
+
+    .copy-button:hover {
+      background: rgba(255, 255, 255, 0.25); /* Slightly more opaque on hover */
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .copy-button svg {
+      fill: white;
+      width: 20px;
+      height: 20px;
+    }
+
+    .copy-tooltip {
+      position: absolute;
+      top: -30px; /* Position above the button */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      pointer-events: none; /* Allow clicks through */
+    }
+
+    .copy-tooltip.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+
+    /* Iframe Styling */
     iframe {
       width: 100%;
-      height: 500px;
+      min-height: 400px; /* Ensure a minimum height */
+      height: 500px; /* Default height */
       border: none;
       border-radius: 10px;
-      margin-top: 2rem;
+      margin-top: 1rem; /* Adjust margin */
+      background-color: #1a1a1a; /* Placeholder background */
+      display: block; /* Ensure it takes full width */
     }
-    .description {
+
+    /* Loading Indicator */
+    .loading-indicator {
       text-align: center;
-      opacity: 0.8;
-      margin-bottom: 2rem;
+      padding: 20px;
+      color: #aaa;
+      font-size: 1.1rem;
+      display: none; /* Hidden by default */
+    }
+
+    /* Footer Styling */
+    footer {
+      height: 70px;
+      margin: 0 3%;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
+      justify-content: center; /* Center content horizontally */
+      padding: 0 1rem; /* Add some padding */
+    }
+
+    .footer-content {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .footer-logo {
+      height: 23px;
+      padding-top: 1px;
+      width: auto;
+    }
+
+    .footer-text {
+      color: #6b7a8a;
+      font-size: 0.75rem; /* text-xs */
+      border-left: 1px solid #fff;
+      padding-left: 7px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      header nav {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .container {
+        margin: 1rem auto;
+        padding: 0.5rem;
+      }
+
+      .tabs {
+        flex-direction: column; /* Stack tabs vertically */
+        gap: 0.5rem;
+      }
+
+      .tab {
+        width: 100%;
+        max-width: none; /* Allow tabs to take full width */
+      }
+
+      .input-with-icon-container {
+        /* No change needed here, it's already flexible */
+      }
+
+      .copy-button {
+        /* On smaller screens, the button is already positioned correctly within the input bar */
+      }
+
+      footer {
+        height: auto;
+        padding: 1rem;
+        margin-bottom: 60px; /* Adjust for mobile footer */
+      }
+
+      .footer-content {
+        flex-direction: column; /* Stack footer content vertically */
+        text-align: center;
+      }
+
+      .footer-text {
+        border-left: none; /* Remove border on small screens */
+        padding-left: 0;
+        margin-top: 5px; /* Space between logo and text */
+      }
+    }
+
+    @media (max-width: 480px) {
+      header h1 {
+        font-size: 1.2rem;
+      }
+      .header-logo {
+        height: 20px;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <div style="display: flex;align-items: center;gap: 15px;">
-    <img href="https://indraembed.netlify.app" style="height:26px;" src="https://i.ibb.co/fdNLmRw1/Indra-Embed-removebg-preview.png" alt="Indra-Embed" border="0" />
-    <h1>Indra Embed</h1>
+    <div class="header-left">
+      <img class="header-logo" src="https://i.ibb.co/fdNLmRw1/Indra-Embed-removebg-preview.png" alt="Indra Embed Logo" />
+      <h1>Indra Embed</h1>
     </div>
     <nav>
       <a href="https://indraembed.netlify.app/">Home</a>
@@ -152,73 +352,169 @@
       <a href="#">Docs</a>
     </nav>
   </header>
+
   <div class="container">
     <div class="description">
       <p><strong>Indra Embed</strong> is the first public player to support multi-audio movie & series embedding with a modern UI. Used by <strong>Watch Out</strong>, powered by <strong>Indra Group</strong>.</p>
     </div>
+
     <div class="tabs">
       <div class="tab active" id="movieTab">Movie</div>
       <div class="tab" id="tvTab">TV Show</div>
     </div>
+
     <input type="text" id="tmdbInput" placeholder="Enter TMDB ID" value="299534" />
     <input type="number" id="seasonInput" placeholder="Enter Season Number" style="display: none" />
     <input type="number" id="episodeInput" placeholder="Enter Episode Number" style="display: none" />
-    <iframe id="embedFrame" src="/movie/299534"></iframe>
+
+    <div class="input-with-icon-container">
+      <input type="text" id="embedUrlOutput" class="embed-url-output" readonly placeholder="Generated Embed URL" />
+      <button id="copyButton" class="copy-button" title="Copy URL">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+        </svg>
+        <span id="copyTooltip" class="copy-tooltip">Copied!</span>
+      </button>
+    </div>
+
+    <div class="loading-indicator" id="loadingIndicator">Loading content...</div>
+    <iframe id="embedFrame" src="https://indraembed.netlify.app/movie/299534" title="Indra Embed Player"></iframe>
   </div>
-  <footer class="border-t border-[#1a2a35] h-12">
-    <div class="max-w-screen-xl mx-auto px-4 h-full flex items-center space-x-2" bis_skin_checked="1">
-      <img src="https://i.ibb.co/B2gPPxmV/Copy-of-Ratna-Group-Wallpaper-1-1.png" alt="Indra Group logo" class="h-4 w-auto">
-      <span class="text-[#6b7a8a] text-xs">© Indra Embed, Inc</span>
+
+  <footer>
+    <div class="footer-content">
+      <img src="https://i.ibb.co/B2gPPxmV/Copy-of-Ratna-Group-Wallpaper-1-1.png" alt="Indra Group logo" class="footer-logo">
+      <span class="footer-text">© Indra Embed, Inc</span>
     </div>
   </footer>
+
   <script>
-    const movieTab = document.getElementById('movieTab');
-    const tvTab = document.getElementById('tvTab');
-    const tmdbInput = document.getElementById('tmdbInput');
-    const seasonInput = document.getElementById('seasonInput');
-    const episodeInput = document.getElementById('episodeInput');
-    const embedFrame = document.getElementById('embedFrame');
+    // Self-executing anonymous function to encapsulate variables and avoid global pollution
+    (function() {
+      const movieTab = document.getElementById('movieTab');
+      const tvTab = document.getElementById('tvTab');
+      const tmdbInput = document.getElementById('tmdbInput');
+      const seasonInput = document.getElementById('seasonInput');
+      const episodeInput = document.getElementById('episodeInput');
+      const embedUrlOutput = document.getElementById('embedUrlOutput');
+      const copyButton = document.getElementById('copyButton');
+      const copyTooltip = document.getElementById('copyTooltip');
+      const embedFrame = document.getElementById('embedFrame');
+      const loadingIndicator = document.getElementById('loadingIndicator');
 
-    let selectedType = 'movie';
+      let selectedType = 'movie'; // Default selected type
 
-    function updateFrame() {
-      const id = tmdbInput.value.trim();
-      if (!id) return;
-      if (selectedType === 'movie') {
-        embedFrame.src = `/movie/${id}`;
-      } else {
-        const season = seasonInput.value.trim();
-        const episode = episodeInput.value.trim();
-        if (!season || !episode) return;
-        embedFrame.src = `/tv/${id}/${season}/${episode}`;
+      /**
+       * Updates the iframe's source and the embed URL output based on selected type and input values.
+       * Shows a loading indicator while the iframe content loads.
+       */
+      function updateFrame() {
+        const id = tmdbInput.value.trim();
+        let newSrc = '';
+
+        // Show loading indicator
+        loadingIndicator.style.display = 'block';
+        embedFrame.style.display = 'none'; // Hide iframe during loading
+
+        if (!id) {
+          embedFrame.src = 'about:blank'; // Clear iframe if no ID
+          embedUrlOutput.value = ''; // Clear output URL
+          loadingIndicator.style.display = 'none';
+          embedFrame.style.display = 'block';
+          return;
+        }
+
+        if (selectedType === 'movie') {
+          newSrc = `https://indraembed.netlify.app/movie/${id}`;
+        } else {
+          const season = seasonInput.value.trim();
+          const episode = episodeInput.value.trim();
+
+          // Basic validation for TV show inputs
+          if (!season || !episode || isNaN(season) || isNaN(episode) || parseInt(season) <= 0 || parseInt(episode) <= 0) {
+            embedFrame.src = 'about:blank'; // Clear iframe
+            embedUrlOutput.value = ''; // Clear output URL
+            loadingIndicator.style.display = 'none';
+            embedFrame.style.display = 'block';
+            return;
+          }
+          newSrc = `https://indraembed.netlify.app/tv/${id}/${season}/${episode}`;
+        }
+        embedFrame.src = newSrc;
+        embedUrlOutput.value = newSrc; // Update the output URL field
       }
-    }
 
-    movieTab.onclick = () => {
-      selectedType = 'movie';
-      movieTab.classList.add('active');
-      tvTab.classList.remove('active');
-      seasonInput.style.display = 'none';
-      episodeInput.style.display = 'none';
-      tmdbInput.value = '299534';
+      /**
+       * Handles the click event for the Movie tab.
+       * Sets the selected type to 'movie' and updates UI visibility.
+       */
+      movieTab.addEventListener('click', () => {
+        selectedType = 'movie';
+        movieTab.classList.add('active');
+        tvTab.classList.remove('active');
+        seasonInput.style.display = 'none';
+        episodeInput.style.display = 'none';
+        tmdbInput.value = '299534'; // Default movie ID
+        updateFrame();
+      });
+
+      /**
+       * Handles the click event for the TV Show tab.
+       * Sets the selected type to 'tv' and updates UI visibility.
+       */
+      tvTab.addEventListener('click', () => {
+        selectedType = 'tv';
+        tvTab.classList.add('active');
+        movieTab.classList.remove('active');
+        seasonInput.style.display = 'block';
+        episodeInput.style.display = 'block';
+        tmdbInput.value = '93405'; // Default TV show ID
+        seasonInput.value = '1';    // Default season
+        episodeInput.value = '1';   // Default episode
+        updateFrame();
+      });
+
+      /**
+       * Copies the content of the embedUrlOutput to the clipboard.
+       * Provides visual feedback using a tooltip.
+       */
+      copyButton.addEventListener('click', () => {
+        const urlToCopy = embedUrlOutput.value;
+        if (urlToCopy) {
+          // Create a temporary textarea element to copy the text
+          const tempTextArea = document.createElement('textarea');
+          tempTextArea.value = urlToCopy;
+          document.body.appendChild(tempTextArea);
+          tempTextArea.select();
+          try {
+            document.execCommand('copy'); // Execute copy command
+            copyTooltip.classList.add('show'); // Show tooltip
+            setTimeout(() => {
+              copyTooltip.classList.remove('show'); // Hide tooltip after a delay
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy text: ', err);
+            // Optionally, provide a fallback message to the user
+          } finally {
+            document.body.removeChild(tempTextArea); // Clean up the temporary element
+          }
+        }
+      });
+
+      // Add event listeners for input changes to trigger frame update
+      tmdbInput.addEventListener('input', updateFrame);
+      seasonInput.addEventListener('input', updateFrame);
+      episodeInput.addEventListener('input', updateFrame);
+
+      // Hide loading indicator and show iframe once content is loaded
+      embedFrame.addEventListener('load', () => {
+        loadingIndicator.style.display = 'none';
+        embedFrame.style.display = 'block';
+      });
+
+      // Initial frame update when the page loads
       updateFrame();
-    };
-
-    tvTab.onclick = () => {
-      selectedType = 'tv';
-      tvTab.classList.add('active');
-      movieTab.classList.remove('active');
-      seasonInput.style.display = 'block';
-      episodeInput.style.display = 'block';
-      tmdbInput.value = '93405';
-      seasonInput.value = '1';
-      episodeInput.value = '1';
-      updateFrame();
-    };
-
-    tmdbInput.oninput = updateFrame;
-    seasonInput.oninput = updateFrame;
-    episodeInput.oninput = updateFrame;
+    })();
   </script>
 </body>
 </html>
