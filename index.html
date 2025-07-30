@@ -3,114 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indra Embed</title>
+  <title>Indra Embed Player</title>
   <style>
-    :root {
-      --bg: #0f0f0f;
-      --text: #ffffff;
-      --accent: #e50914;
-      --radius: 12px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', sans-serif;
-      padding: 1rem;
+      margin: 0;
+      background: #000;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-
-    .container {
+    #player-container {
+      width: 100%;
       max-width: 960px;
-      margin: auto;
-      text-align: center;
-    }
-
-    .title {
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .meta {
-      color: #aaa;
-      margin-bottom: 1rem;
-    }
-
-    .player-wrapper {
+      aspect-ratio: 16 / 9;
+      background: #111;
       position: relative;
-      padding-top: 56.25%; /* 16:9 ratio */
-      margin-bottom: 1.5rem;
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: 0 0 10px #00000088;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-
     iframe {
-      position: absolute;
       width: 100%;
       height: 100%;
-      top: 0;
-      left: 0;
       border: none;
-      border-radius: var(--radius);
+      background: #000;
     }
-
-    .info {
-      font-size: 1rem;
-      color: #ccc;
-      margin-bottom: 2rem;
-    }
-
-    .footer {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 3rem;
+    #loading {
+      position: absolute;
+      color: white;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="title" id="movie-title">Loading...</div>
-    <div class="meta" id="movie-year"></div>
-    <div class="player-wrapper">
-      <iframe id="player" sandbox="allow-same-origin allow-scripts allow-forms allow-presentation" allowfullscreen></iframe>
-    </div>
-    <div class="info" id="movie-overview"></div>
-    <div class="footer">Powered by Indra Embed</div>
+  <div id="player-container">
+    <div id="loading">Loading player...</div>
   </div>
 
   <script>
-    const apiKey = "37ecb5730cb4604593f261a4bbb4127d";
-    const tmdbID = location.pathname.split("/").pop();
-    const isTV = location.pathname.includes("/tv/");
+    const API_KEY = "37ecb5730cb4604593f261a4bbb4127d";
+    const container = document.getElementById("player-container");
+    const loading = document.getElementById("loading");
 
-    async function fetchTMDB() {
-      const type = isTV ? "tv" : "movie";
-      const url = `https://api.themoviedb.org/3/${type}/${tmdbID}?api_key=${apiKey}&language=en-US`;
-      const res = await fetch(url);
-      const data = await res.json();
+    async function init() {
+      const pathParts = window.location.pathname.split("/");
+      const type = pathParts[1]; // 'movie' or 'tv'
+      const tmdbId = pathParts[2];
 
-      const title = data.title || data.name || "Unknown";
-      const year = (data.release_date || data.first_air_date || '').split("-")[0];
-      const overview = data.overview || "No description available.";
+      if (!tmdbId || !type) {
+        loading.innerText = "Invalid URL format.";
+        return;
+      }
 
-      document.getElementById("movie-title").innerText = title;
-      document.getElementById("movie-year").innerText = year;
-      document.getElementById("movie-overview").innerText = overview;
+      try {
+        const tmdbUrl = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${API_KEY}`;
+        const res = await fetch(tmdbUrl);
+        const data = await res.json();
 
-      const fetchEmbed = await fetch(`https://hlsworker.worker.dev/?title=${encodeURIComponent(title)}`);
-      const embedURL = await fetchEmbed.text();
+        let title = data.title || data.name || "";
+        let slug = title.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
 
-      const iframe = document.getElementById("player");
-      iframe.src = embedURL.startsWith("http") ? embedURL : `https://videasy.to/embed/${tmdbID}`;
+        const workerUrl = `https://hlsworker.watchoutofficial2006.workers.dev/?title=${slug}`;
+        const workerRes = await fetch(workerUrl);
+        const workerData = await workerRes.json();
+
+        if (workerData?.result?.files?.[0]?.file_code) {
+          const fileCode = workerData.result.files[0].file_code;
+          const embedUrl = `https://watchout.rpmvid.com/#${fileCode}`;
+
+          container.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+        } else {
+          container.innerHTML = `<iframe sandbox="allow-scripts allow-same-origin" src="https://videasy.to/embed/${tmdbId}" allowfullscreen></iframe>`;
+        }
+      } catch (e) {
+        container.innerHTML = `<p style='color: red;'>Failed to load player.</p>`;
+        console.error(e);
+      }
     }
 
-    fetchTMDB();
+    init();
   </script>
 </body>
 </html>
