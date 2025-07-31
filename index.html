@@ -47,7 +47,7 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       padding: 1rem 2rem;
       display: flex;
-      justify-content: space-between;
+      justify-content: space-between; /* Distributes space between left and right groups */
       align-items: center;
       z-index: 999;
       flex-wrap: wrap; /* Allow wrapping on small screens */
@@ -70,12 +70,11 @@
       white-space: nowrap; /* Prevent title from breaking */
     }
 
+    /* Nav is now inside header-right */
     header nav {
       display: flex;
       gap: 1.5rem;
       flex-wrap: wrap; /* Allow nav items to wrap */
-      flex-grow: 1; /* Allow nav to take available space */
-      justify-content: center; /* Center items within the nav */
     }
 
     header nav a {
@@ -83,34 +82,29 @@
       text-decoration: none;
       font-weight: 500;
       padding: 0.5rem 1rem; /* Add padding for clickable area */
-      border-radius: 8px; /* Rounded corners for liquid glass effect */
-      transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-      
-      /* Liquid Glass Effect */
-      background: rgba(255, 255, 255, 0.05); /* Very subtle background */
-      backdrop-filter: blur(5px); /* Subtle blur */
-      border: 1px solid rgba(255, 255, 255, 0.1); /* Light border */
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      border-radius: 8px; /* Rounded corners for clean look */
+      transition: background 0.3s ease, color 0.3s ease; /* Smooth transitions for hover */
+      background: transparent; /* Ensure no background */
+      border: none; /* Ensure no border */
+      box-shadow: none; /* Ensure no shadow */
     }
 
     header nav a:hover {
       color: red; /* Highlight on hover */
-      background: rgba(255, 255, 255, 0.1); /* Slightly more opaque on hover */
-      border-color: rgba(255, 255, 255, 0.2);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.08); /* Subtle background on hover */
     }
 
     header nav a.active-nav {
       color: red; /* Active color */
-      background: rgba(255, 0, 0, 0.15); /* Red tint for active */
-      border-color: red; /* Red border for active */
-      box-shadow: 0 2px 8px rgba(255, 0, 0, 0.3); /* Red glow for active */
+      background: rgba(255, 0, 0, 0.1); /* Subtle red background for active state */
+      border-color: transparent; /* No border for active state */
+      box-shadow: none; /* No shadow for active state */
     }
 
     .header-right {
-      display: flex;
+      display: flex; /* Make this a flex container for its children (nav and watchout-link) */
       align-items: center;
-      gap: 15px;
+      gap: 1.5rem; /* Space between nav and watchout-link */
     }
 
     .watchout-link {
@@ -142,8 +136,6 @@
       width: 30px; /* Keep width and height same for perfect circle */
       border-radius: 50%; /* Make it round */
       object-fit: cover; /* Ensure the image covers the area */
-      /* Removed liquid glass properties from here as they are now on the parent link */
-      /* Removed background-color and border from here */
     }
 
     /* Main Container */
@@ -253,20 +245,22 @@
 
     .copy-button {
       position: absolute;
-      right: 5px; /* Position from the right edge of the container */
+      right: 5px;
       top: 50%;
       transform: translateY(-50%);
-      background: transparent; /* No background */
-      border: none; /* No border */
-      box-shadow: none; /* No shadow */
-      border-radius: 6px; /* Still apply border-radius for click area */
-      padding: 0.5rem 0.75rem; /* Padding for click area */
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 6px;
+      /* Removed padding */
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.3s ease, opacity 0.3s ease;
-      z-index: 10; /* Ensure button is above input text */
+      z-index: 10;
+      height: 40px; /* Explicitly set height to match input's visual height */
+      width: 40px; /* Make it a square for consistent click area */
     }
 
     .copy-button:hover {
@@ -422,19 +416,20 @@
         gap: 1rem;
       }
 
-      header nav {
-        justify-content: center;
-        width: 100%;
-        order: 3; /* Move nav to the bottom on small screens */
-      }
-
+      /* On small screens, header-left and header-right will stack */
       .header-left, .header-right {
         width: 100%;
-        justify-content: center; /* Center them on small screens */
+        justify-content: center; /* Center their contents */
+        margin: 0; /* Remove auto margins for stacking */
       }
       .header-left { order: 1; }
       .header-right { order: 2; margin-top: 10px; } /* Add some space */
 
+      /* Nav is now inside header-right, so its order is relative to other header-right items */
+      header nav {
+        justify-content: center; /* Center nav items on small screens */
+        width: auto; /* Allow nav to shrink/grow as needed */
+      }
 
       .container {
         margin: 1rem auto;
@@ -497,11 +492,11 @@
       <img class="header-logo" src="https://i.ibb.co/fdNLmRw1/Indra-Embed-removebg-preview.png" alt="Indra Embed Logo" />
       <h1>Indra Embed</h1>
     </div>
-    <nav>
-      <a href="#" id="playerNavLink" class="active-nav">Player</a>
-      <a href="#" id="docsNavLink">Docs</a>
-    </nav>
     <div class="header-right">
+      <nav>
+        <a href="#" id="playerNavLink" class="active-nav">Player</a>
+        <a href="#" id="docsNavLink">Docs</a>
+      </nav>
       <a href="https://watchout.fun" target="_blank" title="Visit Watch Out" class="watchout-link">
         <img src="https://simgbb.com/avatar/tPYRMBtx3XSy.png" alt="Watch Out Logo" class="watchout-logo">
       </a>
