@@ -30,6 +30,39 @@
 </head>
 <body>
   <script>
+    const REGION_PLAYER_MAP = [
+  { match: ['tamil nadu'], url: 'https://watchout-tamil.rpmvid.com' },
+  { match: ['telangana', 'andhra pradesh'], url: 'https://watchout-telugu.rpmvid.com' },
+  { match: ['kerala'], url: 'https://watchout-malayalam.rpmvid.com' },
+  { match: ['karnataka'], url: 'https://watchout-kannada.rpmvid.com' },
+  { country: 'IN', url: 'https://watchout.rpmvid.com' }, // Default Hindi for India
+  { country: 'PK', url: 'https://watchout.rpmvid.com' }, // Hindi player for Pakistan
+  { country: 'default', url: 'https://watchouteng.rpmvid.com' } // English for rest
+];
+
+
+async function getRegionBasedPlayerBaseUrl() {
+  try {
+    const ipInfo = await fetch("https://ipapi.co/json").then(res => res.json());
+    const country = ipInfo.country_code;
+    const region = ipInfo.region.toLowerCase();
+
+    for (const entry of REGION_PLAYER_MAP) {
+      if (entry.match && entry.match.some(r => region.includes(r))) {
+        return entry.url;
+      }
+      if (entry.country && entry.country === country) {
+        return entry.url;
+      }
+    }
+
+    // Fallback to default English player
+    return REGION_PLAYER_MAP.find(e => e.country === 'default').url;
+  } catch (error) {
+    console.error("Failed to fetch location info:", error);
+    return REGION_PLAYER_MAP.find(e => e.country === 'default').url;
+  }
+}
     function sanitizeTitle(title) {
       return title
         .replace(/[^a-zA-Z0-9 ]/g, '') // remove special characters
@@ -69,8 +102,9 @@
         const file = result?.files?.[0];
 
         if (file && file.file_code) {
-          const src = `https://watchout.rpmvid.com/#${file.file_code}`;
-          document.body.innerHTML = `<iframe src="${src}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+          const src = `${file.file_code}`;
+          const playerBaseUrl = await getRegionBasedPlayerBaseUrl();
+          document.body.innerHTML = `<iframe src="${playerBaseUrl}/#${src}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         } else {
           const fallback = type === 'tv' && season && episode
             ? `https://player.videasy.net/tv/${tmdbId}/${season}/${episode}`
