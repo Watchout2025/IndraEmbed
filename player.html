@@ -80,7 +80,7 @@
       document.head.appendChild(link);
     }
 
-    function insertSEO(data, type, year) {
+    async function insertSEO(data, type, year, fullTitle) {
       removeOldSEO();
 
       const rawTitle = data.title || data.name;
@@ -89,6 +89,8 @@
         ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
         : "https://watchoutofficial2006.workers.dev/placeholder.jpg";
       const url = window.location.href;
+      const playerBaseUrl = await getRegionBasedPlayerBaseUrl();
+      const embedUrl = `${playerBaseUrl}/#${fullTitle}`;
 
       // Title
       const pageTitle = `${rawTitle} (${year || ""}) | Watch Online Free`;
@@ -125,6 +127,7 @@
         "uploadDate": new Date().toISOString(),
         "genre": data.genres ? data.genres.map(g => g.name) : undefined,
         "url": url,
+        "embedUrl": embedUrl,
         "publisher": {
           "@type": "Organization",
           "name": "WatchOut",
@@ -170,13 +173,13 @@
         const rawTitle = tmdbData.title || tmdbData.name;
         const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
 
-        insertSEO(tmdbData, type, year);
-
         let fullTitle = sanitizeTitle(rawTitle);
         if (type === "movie") fullTitle = year ? `${fullTitle}.${year}` : fullTitle;
         if (type === "tv" && season && episode) {
           fullTitle += `.S${season.padStart(2,"0")}E${episode.padStart(2,"0")}`;
         }
+
+        await insertSEO(tmdbData, type, year, fullTitle);
 
         const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(fullTitle)}`);
         const { result } = await apiRes.json();
