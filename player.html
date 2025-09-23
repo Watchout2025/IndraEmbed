@@ -20,17 +20,9 @@
       overflow-y: auto;
       font-family: sans-serif;
     }
-    #poster {
-      display: none; /* hidden but present for SEO */
-    }
-    #player-container {
-      text-align: center;
-    }
-    iframe {
-      border: none;
-      width: 100vw;
-      height: 100vh;
-    }
+    #poster { display: none; }
+    #player-container { text-align: center; }
+    iframe { border: none; width: 100vw; height: 100vh; }
     .fallback { text-align: center; margin-top: 20vh; }
   </style>
 </head>
@@ -39,7 +31,6 @@
   <div id="player-container"></div>
 
   <script>
-    // ---------------- Region Player Map ----------------
     const REGION_PLAYER_MAP = [
       { match: ["tamil nadu"], url: "https://watchout-tamil.rpmvid.com" },
       { match: ["telangana", "andhra pradesh"], url: "https://watchout-telugu.rpmvid.com" },
@@ -68,28 +59,15 @@
       return title.replace(/[^a-zA-Z0-9 ]/g,"").replace(/\s+/g,".").replace(/\.{2,}/g,".").trim();
     }
 
-    // ---------------- SEO Inserter ----------------
     function removeOldSEO() {
-      // Remove old meta, link, JSON-LD, and title
-      const oldMeta = document.head.querySelectorAll("meta[data-dynamic='true']");
-      oldMeta.forEach(m => m.remove());
-
-      const oldLink = document.head.querySelectorAll("link[data-dynamic='true']");
-      oldLink.forEach(l => l.remove());
-
-      const oldScripts = document.head.querySelectorAll("script[data-dynamic='true']");
-      oldScripts.forEach(s => s.remove());
-
-      // Remove old dynamic title
-      const oldTitle = document.head.querySelector("title[data-dynamic='true']");
-      if(oldTitle) oldTitle.remove();
+      document.head.querySelectorAll("[data-dynamic='true']").forEach(el => el.remove());
     }
 
     function insertMeta(name, content, attr="name") {
-      let tag = document.createElement("meta");
+      const tag = document.createElement("meta");
       tag.setAttribute(attr, name);
       tag.setAttribute("content", content);
-      tag.dataset.dynamic = "true"; // mark dynamic for removal later
+      tag.dataset.dynamic = "true";
       document.head.appendChild(tag);
     }
 
@@ -103,7 +81,7 @@
     }
 
     function insertSEO(data, type, year) {
-      removeOldSEO(); // Clear previous SEO data
+      removeOldSEO();
 
       const rawTitle = data.title || data.name;
       const overview = (data.overview || "Watch online now.").slice(0,160);
@@ -144,15 +122,15 @@
         "name": rawTitle,
         "description": overview,
         "thumbnailUrl": poster,
-        "uploadDate": "2025-01-01",
-        "genre": data.genres ? data.genres.map(g=>g.name) : undefined,
+        "uploadDate": new Date().toISOString(),
+        "genre": data.genres ? data.genres.map(g => g.name) : undefined,
         "url": url,
         "publisher": {
           "@type": "Organization",
           "name": "WatchOut",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://watchoutofficial2006.workers.dev/logo.png"
+            "url": "https://i.ibb.co/fdNLmRw1/Indra-Embed-removebg-preview.png"
           }
         }
       };
@@ -168,17 +146,17 @@
       // Canonical image
       insertLink("image_src", poster);
 
-      // Insert poster image (hidden)
+      // Insert hidden poster image
       const img = document.createElement("img");
       img.id = "poster";
       img.src = poster;
       img.alt = rawTitle;
       img.style.display = "none";
-      document.getElementById("poster-container").innerHTML = "";
-      document.getElementById("poster-container").appendChild(img);
+      const container = document.getElementById("poster-container");
+      container.innerHTML = "";
+      container.appendChild(img);
     }
 
-    // ---------------- Main Player Loader ----------------
     async function loadPlayer() {
       const [type, tmdbId, season, episode] = window.location.pathname.split("/").filter(Boolean);
       if (!tmdbId || !["movie", "tv"].includes(type)) {
@@ -192,29 +170,27 @@
         const rawTitle = tmdbData.title || tmdbData.name;
         const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
 
-        // Insert SEO + Poster + Canonical
         insertSEO(tmdbData, type, year);
 
-        // Build playable title
         let fullTitle = sanitizeTitle(rawTitle);
         if (type === "movie") fullTitle = year ? `${fullTitle}.${year}` : fullTitle;
         if (type === "tv" && season && episode) {
           fullTitle += `.S${season.padStart(2,"0")}E${episode.padStart(2,"0")}`;
         }
 
-        // Get streaming file
         const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(fullTitle)}`);
         const { result } = await apiRes.json();
         const file = result?.files?.[0];
 
+        const playerContainer = document.getElementById("player-container");
         if (file?.file_code) {
           const playerBaseUrl = await getRegionBasedPlayerBaseUrl();
-          document.getElementById("player-container").innerHTML = `<iframe src="${playerBaseUrl}/#${file.file_code}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+          playerContainer.innerHTML = `<iframe src="${playerBaseUrl}/#${file.file_code}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         } else {
           const fallback = type === "tv" && season && episode
             ? `https://player.videasy.net/tv/${tmdbId}/${season}/${episode}`
             : `https://player.videasy.net/movie/${tmdbId}`;
-          document.getElementById("player-container").innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+          playerContainer.innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         }
       } catch {
         document.getElementById("player-container").innerHTML = '<h1 class="fallback">Something went wrong</h1>';
