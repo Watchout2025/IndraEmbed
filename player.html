@@ -80,7 +80,7 @@
       document.head.appendChild(link);
     }
 
-    async function insertSEO(data, type, year, fullTitle) {
+    async function insertSEO(data, type, year, embedUrl) {
       removeOldSEO();
 
       const rawTitle = data.title || data.name;
@@ -89,8 +89,6 @@
         ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
         : "https://watchoutofficial2006.workers.dev/placeholder.jpg";
       const url = window.location.href;
-      const playerBaseUrl = await getRegionBasedPlayerBaseUrl();
-      const embedUrl = `${playerBaseUrl}/#${fullTitle}`;
 
       // Title
       const pageTitle = `${rawTitle} (${year || ""}) | Watch Online Free`;
@@ -127,7 +125,7 @@
         "uploadDate": new Date().toISOString(),
         "genre": data.genres ? data.genres.map(g => g.name) : undefined,
         "url": url,
-        "embedUrl": embedUrl,
+        "embedUrl": embedUrl, // Correct embedUrl with file_code
         "publisher": {
           "@type": "Organization",
           "name": "WatchOut",
@@ -179,8 +177,6 @@
           fullTitle += `.S${season.padStart(2,"0")}E${episode.padStart(2,"0")}`;
         }
 
-        await insertSEO(tmdbData, type, year, fullTitle);
-
         const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(fullTitle)}`);
         const { result } = await apiRes.json();
         const file = result?.files?.[0];
@@ -188,11 +184,19 @@
         const playerContainer = document.getElementById("player-container");
         if (file?.file_code) {
           const playerBaseUrl = await getRegionBasedPlayerBaseUrl();
-          playerContainer.innerHTML = `<iframe src="${playerBaseUrl}/#${file.file_code}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+          const embedUrl = `${playerBaseUrl}/#${file.file_code}`;
+
+          // Insert SEO now that we have correct embedUrl
+          await insertSEO(tmdbData, type, year, embedUrl);
+
+          playerContainer.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         } else {
           const fallback = type === "tv" && season && episode
             ? `https://player.videasy.net/tv/${tmdbId}/${season}/${episode}`
             : `https://player.videasy.net/movie/${tmdbId}`;
+
+          await insertSEO(tmdbData, type, year, fallback);
+
           playerContainer.innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
         }
       } catch {
