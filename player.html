@@ -166,7 +166,7 @@
       }
 
       try {
-        const tmdbRes = await fetch(`https://search-proxy.watchoutofficial2006.workers.dev/${type}/${tmdbId}`);
+        const tmdbRes = await fetch(`https://search-proxy.bingeoutofficial.workers.dev/${type}/${tmdbId}`);
         const tmdbData = await tmdbRes.json();
         const rawTitle = tmdbData.title || tmdbData.name;
         const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
