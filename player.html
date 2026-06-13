@@ -1,210 +1,2873 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="google-site-verification" content="shv4RT9vqJOrVukMqKMT7iJJSuuAMfQn8uDoEsL_Zdw" />
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N5F6GW7KBM"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag("js", new Date());
-    gtag("config", "G-N5F6GW7KBM");
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Vidout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <meta name="google-site-verification" content="shv4RT9vqJOrVukMqKMT7iJJSuuAMfQn8uDoEsL_Zdw" />
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N5F6GW7KBM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag("js", new Date());
+      gtag("config", "G-N5F6GW7KBM");
+    </script>
 
-  <style>
-    html, body {
-      margin: 0; padding: 0; height: 100vh;
-      background: #000; color: #fff;
-      overflow-y: auto;
-      font-family: sans-serif;
-    }
-    #poster { display: none; }
-    #player-container { text-align: center; }
-    iframe { border: none; width: 100vw; height: 100vh; }
-    .fallback { text-align: center; margin-top: 20vh; }
-  </style>
+    <style>
+        @font-face {
+            font-family: 'Netflix Sans';
+            src: url('https://assets.nflxext.com/ffe/siteui/fonts/netflix-sans/v3/NetflixSans_W_Rg.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Netflix Sans';
+            src: url('https://assets.nflxext.com/ffe/siteui/fonts/netflix-sans/v3/NetflixSans_W_Md.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Netflix Sans';
+            src: url('https://assets.nflxext.com/ffe/siteui/fonts/netflix-sans/v3/NetflixSans_W_Bd.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Netflix Icons';
+            src: url('https://assets.nflxext.com/ffe/siteui/fonts/nf-icon-v1-93.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        html,body{height:100%;width:100vw;margin:0;padding:0;overflow:hidden;font-family:'Netflix Sans',sans-serif;background:#000}
+        body{padding-bottom:env(safe-area-inset-bottom)}
+        .bottom-control-button:hover {transform:scale(1.3)}
+        #timeline-row{display:flex;width:100%;box-sizing:border-box;gap:1rem;align-items:center;position:relative}
+        #bottom-controls-row{display:flex;width:100%;padding-top:4px;gap:8px;box-sizing:border-box;position:relative;margin-top:0}
+        .bottom-control-button{background:transparent;border-radius:.2rem;border:none;color:#fff;cursor:pointer;padding:0;margin:0 !important;position:relative;transition:transform 200ms;width:3rem;height:3rem;}
+        #mobile-skip-backward-button{margin-right:calc(1.5rem*calc(1-var(--tw-space-x-reverse)))}
+        #mobile-skip-forward-button{margin-left:calc(1.5rem*calc(1-var(--tw-space-x-reverse)))}
+        @media(min-width:1000px){
+            #bottom-controls-row{padding-top:24px !important;padding-bottom:24px !important;}
+            #mobile-skip-backward-button{margin-right:calc(2.5rem*calc(1-var(--tw-space-x-reverse)))}
+            #mobile-skip-forward-button{margin-left:calc(2.5rem*calc(1-var(--tw-space-x-reverse)))}
+            .bottom-control-button{width:3rem;height:3rem}
+        }
+        @media(max-width:1000px){
+            #right-controlbuttons{width:; justify-content:center;}
+            #next-episode-button{position: relative;right: 0;}
+            #speed-button{position: relative;left: 0;}
+            #bottom-controls-row{justify-content: center;}
+            #left-controlbuttons{display:none;}
+            #center-controls-mobile-only{width: 50vw;justify-content:space-between!important;}
+            #skip-forward-button, #skip-backward-button{display:none;}
+
+            /* Mobile labeled buttons */
+            .mobile-labeled-btn {
+                width: auto !important;
+                height: auto !important;
+                flex-direction: row !important;
+                gap: 5px;
+                padding: 4px 6px !important;
+            }
+            .mobile-labeled-btn svg {
+                width: 1.4rem !important;
+                height: 1.4rem !important;
+            }
+            .mobile-btn-label {
+                display: inline-block;
+                font-size: 0.7rem;
+                font-weight: 500;
+                color: #fff;
+                white-space: nowrap;
+                line-height: 1;
+            }
+        }
+        @media(min-width:1000px){
+            .mobile-btn-label { display: none; }
+        }
+        @media(max-width:500px){
+            #back-button, #report-button, #fit-button, #next-episode-button, #mobile-title{display:none !important;}
+            #right-controlbuttons{width:unset; justify-content:space-between;}
+            #next-episode-button, #speed-button{position:relative;}
+        }
+        /* Mobile title: visible only on mobile/tablet */
+        #mobile-title { display: none; }
+        @media(max-width:999px){
+            #mobile-title { display: flex; }
+            #mobile-title-main {
+                font-size: 16px !important;
+
+                font-weight: 400 !important;
+            }
+        }
+        @media(min-width:1000px){
+            #mobile-title { display: none !important; }
+        }
+        /* Top bar container */
+        #top-bar { pointer-events: none; }
+        #top-bar > * { pointer-events: auto; }
+        @media(min-width:500px) and (max-width:999px){
+            #fullscreen-button { display:; }
+        }
+        @media(min-width:500px){
+            #left-controlbuttons, #right-controlbuttons{gap:1.5rem;}
+            #bottom-controls-row{padding-top:24px;padding-bottom:24px;}
+        }
+        #controls-bar{padding: 0 16px;}
+        
+        #progress-indicator,#seek-thumb{background:rgb(225,0,0)}
+        #center-controls-mobile-only{width: 50vw;justify-content:center;}
+        #seek-bar{height:3px;transition:height 0.15s ease}
+        #seek-bar:hover{height:6px}
+        #seek-thumb{height:1rem;width:1rem;transform:translateY(-50%) scale(1)}
+        #video-container{width:100vw;height:100vh;background:#000}
+        .controls-visible{opacity:1;pointer-events:auto}
+        .controls-hidden{opacity:0;pointer-events:none}
+        #seek-bar:hover #seek-thumb{transform:translateY(-50%) scale(1)}
+        #volume-slider-track{background:#ffffff33}
+        #audio-tracks-container::-webkit-scrollbar,#subtitle-tracks-container::-webkit-scrollbar{width:8px}
+        #audio-tracks-container::-webkit-scrollbar-thumb,#subtitle-tracks-container::-webkit-scrollbar-thumb{background:#555;border-radius:4px}
+        #audio-tracks-container::-webkit-scrollbar-track,#subtitle-tracks-container::-webkit-scrollbar-track{background:transparent}
+
+        /* ---- Track list font size on mobile ---- */
+        @media (max-width: 999px) {
+            #audio-list, #subtitle-list {
+                font-size: 16px !important;
+            }
+        }
+
+        /* ---- Track list item hover effect ---- */
+        .track-selector {
+            border-radius: 4px;
+            padding: 8px 10px !important;
+            transition: background 0.15s ease;
+        }
+        .track-selector:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* ---- Mobile fullscreen audio/subtitle menu (max-width: 999px only) ---- */
+        @media (max-width: 999px) {
+            #audio-subtitle-menu:not(.hidden) {
+                background:black !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                border-radius: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                z-index: 99999 !important;
+                overflow: hidden !important;
+                padding: 0 !important;
+            }
+            #audio-subtitle-menu-inner {
+                flex: 1;
+                overflow: hidden;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+            }
+            #audio-subtitle-menu-inner > .flex {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+            #audio-tracks-container,
+            #subtitle-tracks-container {
+                max-height: unset !important;
+                overflow-y: visible !important;
+                border: none;
+                min-height: 0;
+            }
+            #audio-tracks-container #audio-list,
+            #subtitle-tracks-container #subtitle-list {
+                max-height: unset !important;
+                overflow-y: auto !important;
+                flex: 1;
+                min-height: 0;
+            }
+            #audio-subtitle-menu-footer {
+                display: flex !important;
+            }
+        }
+        /* ---- Desktop: restore defaults, hide mobile-only elements ---- */
+        @media (min-width: 1000px) {
+            #audio-subtitle-menu-footer { display: none !important; }
+            #audio-subtitle-menu-inner  { padding: 0 !important; flex: unset !important; overflow-y: unset !important; }
+        }
+
+        /* ---- Mobile fullscreen speed/quality menu (max-width: 999px only) ---- */
+        @media (max-width: 999px) {
+            #speed-quality-menu:not(.hidden) {
+                background: black !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                border-radius: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                z-index: 99999 !important;
+                overflow: hidden !important;
+                padding: 0 !important;
+            }
+            #speed-quality-menu-inner {
+                flex: 1;
+                overflow: hidden;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+            }
+            #speed-quality-menu-inner > .flex {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+            #speed-tracks-container,
+            #quality-tracks-container {
+                max-height: unset !important;
+                overflow-y: visible !important;
+                border: none;
+                min-height: 0;
+            }
+            #speed-tracks-container #speed-list,
+            #quality-tracks-container #quality-list {
+                max-height: unset !important;
+                overflow-y: auto !important;
+                flex: 1;
+                min-height: 0;
+            }
+            #speed-quality-menu-footer {
+                display: flex !important;
+            }
+        }
+        /* ---- Desktop: restore defaults for speed-quality menu ---- */
+        @media (min-width: 1000px) {
+            #speed-quality-menu-footer { display: none !important; }
+            #speed-quality-menu-inner  { padding: 0 !important; flex: unset !important; overflow-y: unset !important; }
+        }
+        #loading-indicator img{width:50px;height:50px;border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+        /* ---- Netflix-style subtitles ---- */
+        ::cue {
+            background: transparent;
+            color: #fff;
+            font-family: 'Netflix Sans', sans-serif;
+            font-size: 1.1em;
+            font-weight: 400;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
+            line-height: 1.4;
+        }
+        video::-webkit-media-text-track-display {
+            overflow: visible !important;
+        }
+        video::cue {
+            background: transparent;
+        }
+        #video {
+            --subtitle-bottom-offset: 80px;
+        }
+
+        /* ---- Left / Right skip hints ---- */
+        #skip-hint{
+            position:fixed;top:50%;transform:translateY(-50%);
+            font-weight:700;font-size:3.5rem;
+            text-shadow:0 0 20px rgba(0,0,0,.8);
+            opacity:0;
+            transition:opacity .3s ease,transform .15s ease-out;
+            z-index:40;
+            pointer-events:none;
+        }
+        @media (min-width:768px){ #skip-hint{font-size:5rem;} }
+        #skip-hint.show{opacity:1;transform:translateY(-50%) scale(1);}
+        #skip-hint.left{left:8%;}
+        #skip-hint.right{right:8%;}
+
+        /* ---- Bottom bar title display ---- */
+        #title-display {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 40vw;
+        }
+        #title-display .title-main {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        @media (max-width: 600px) {
+            #title-display { max-width: 28vw; }
+            #title-display .title-main { font-size: 0.75rem; }
+        }
+        @media (max-width: 999px) {
+            #title-display { display: none !important; }
+        }
+
+        /* ---- Report Issue Modal ---- */
+        .report-issue-btn {
+          padding: 12px 20px;
+          background: rgb(225,0,0);
+          cursor: pointer;
+          border-radius: 4px;
+          font-weight: 700;
+        }
+        .report-modal {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.75);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 99999;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+          padding: 16px;
+        }
+        .report-modal.active {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .report-modal-box {
+          background: #141414;
+          width: 100%;
+          max-width: 420px;
+          border-radius: 6px;
+          padding: 20px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+          transform: translateY(10px) scale(0.96);
+          transition: transform 0.2s ease;
+        }
+        .report-modal.active .report-modal-box {
+          transform: translateY(0) scale(1);
+        }
+        .report-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+        .report-modal-title {
+          color: #fff;
+          font-size: 18px;
+          margin: 0;
+          font-weight: 700;
+        }
+        .report-close-btn {
+          background: none;
+          border: none;
+          color: #b3b3b3;
+          font-size: 22px;
+          cursor: pointer;
+          line-height: 1;
+        }
+        .report-close-btn:hover { color: #fff; }
+        .report-modal-body label {
+          display: block;
+          margin: 14px 0 6px;
+          font-size: 13px;
+          color: #b3b3b3;
+        }
+        .report-modal-body select,
+        .report-modal-body textarea {
+          width: 100%;
+          padding: 12px 40px 12px 12px;
+          background: #000;
+          border: 1px solid #2a2a2a;
+          color: #fff;
+          border-radius: 4px;
+          font-size: 14px;
+          font-family: 'Netflix Sans', sans-serif;
+          outline: none;
+          box-sizing: border-box;
+        }
+        .report-modal-body select {
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23b3b3b3' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 14px center;
+          background-size: 12px;
+        }
+        .report-modal-body select:focus,
+        .report-modal-body textarea:focus {
+          border-color: rgb(225,0,0);
+        }
+        .report-modal-body textarea {
+          resize: none;
+          min-height: 96px;
+        }
+        .report-modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 20px;
+        }
+        .report-submit-btn {
+          padding: 10px 18px;
+          background: rgb(225,0,0);
+          cursor: pointer;
+          border-radius: 4px;
+          font-weight: 700;
+        }
+        .report-submit-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        @media (max-width: 480px) {
+          .report-modal-box { padding: 16px; }
+          .report-modal-title { font-size: 16px; }
+          .report-issue-btn { width: 100%; }
+        }
+
+        /* ---- IntroDB Skip Prompt Button ---- */
+        #skip-prompt {
+            position: absolute;
+            bottom: 90px;
+            right: 20px;
+            z-index: 25;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(6px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        #skip-prompt.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        #skip-prompt-btn {
+            background: #fff;
+            color: #000;
+            border: 1.5px solid rgba(255,255,255,0.75);
+            border-radius: 3px;
+            padding: 9px 22px;
+            font-family: 'Netflix Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        #skip-prompt-btn:hover {
+            background: rgba(255,255,255,0.18);
+            border-color: #fff;
+        }
+        @media (max-width: 600px) {
+            #skip-prompt { bottom: 80px; right: 12px; }
+            #skip-prompt-btn { font-size: 13px; padding: 7px 16px; }
+        }
+        @media (min-width: 1000px) {
+            #skip-prompt { bottom: 100px; right: 28px; }
+        }
+
+        /* ---- Seekbar timestamp markers ---- */
+        .seekbar-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.75;
+        }
+        .seekbar-marker.intro  { background: rgba(255, 200, 0, 0.7); }
+        .seekbar-marker.recap  { background: rgba(100, 180, 255, 0.7); }
+        .seekbar-marker.credits{ background: rgba(180, 120, 255, 0.7); }
+        .seekbar-marker.preview{ background: rgba(80, 220, 120, 0.7); }
+
+        /* ---- Seek bar hover timestamp tooltip ---- */
+        #seek-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            transform: translateX(-50%);
+            background: rgba(15, 15, 15, 0.92);
+            color: #fff;
+            font-family: 'Netflix Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 4px 9px;
+            border-radius: 4px;
+            pointer-events: none;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 50;
+        }
+        #seek-tooltip.visible { opacity: 1; }
+        @media (max-width: 600px) {
+            #seek-tooltip { font-size: 11px; padding: 3px 7px; }
+        }
+    </style>
 </head>
 <body>
-  <div id="poster-container"></div>
-  <div id="player-container"></div>
 
-  <script>
-    const REGION_PLAYER_MAP = [
-      { match: ["tamil nadu"], url: "https://watchout-tamil.rpmvid.com" },
-      { match: ["telangana", "andhra pradesh"], url: "https://watchout-telugu.rpmvid.com" },
-      { match: ["kerala"], url: "https://watchout-malayalam.rpmvid.com" },
-      { match: ["karnataka"], url: "https://watchout-kannada.rpmvid.com" },
-      { country: "IN", url: "https://watchout.rpmvid.com" },
-      { country: "PK", url: "https://watchout.rpmvid.com" },
-      { country: "default", url: "https://watchouteng.rpmvid.com" }
-    ];
+<div id="video-container" class="relative">
+    <video id="video" class="h-full w-full object-contain" autoplay playsinline style="--cue-bottom:80px;"></video>
 
-    async function getRegionBasedPlayerBaseUrl() {
-      try {
-        const ipInfo = await fetch("https://ipapi.co/json").then(res => res.json());
-        const { country_code, region } = ipInfo;
-        for (const entry of REGION_PLAYER_MAP) {
-          if (entry.match && entry.match.some(r => region.toLowerCase().includes(r))) return entry.url;
-          if (entry.country && entry.country === country_code) return entry.url;
-        }
-        return REGION_PLAYER_MAP.find(e => e.country === "default").url;
-      } catch {
-        return REGION_PLAYER_MAP.find(e => e.country === "default").url;
-      }
-    }
+    <!-- Left / Right skip hint -->
+    <div id="skip-hint" class="text-white"></div>
 
-    function sanitizeTitle(title) {
-      return title.replace(/[^a-zA-Z0-9 ]/g,"").replace(/\s+/g,".").replace(/\.{2,}/g,".").trim();
-    }
+    <!-- Loading spinner -->
+    <div id="loading-indicator" style="pointer-events:none;" class="absolute inset-0 flex items-center justify-center bg-black/50 z-30 hidden">
+        <img src="https://assets.nflxext.com/en_us/pages/wiplayer/site-spinner.png" class="w-20 h-20 rounded-full shadow-lg" alt="Loading">
+    </div>
 
-    function removeOldSEO() {
-      document.head.querySelectorAll("[data-dynamic='true']").forEach(el => el.remove());
-    }
+    <div id="top-overlay" class="absolute inset-0 cursor-pointer z-10"></div>
 
-    function insertMeta(name, content, attr="name") {
-      const tag = document.createElement("meta");
-      tag.setAttribute(attr, name);
-      tag.setAttribute("content", content);
-      tag.dataset.dynamic = "true";
-      document.head.appendChild(tag);
-    }
+    <!-- Center play/pause (mobile) -->
+    <div id="center-play-pause-overlay"
+         class="flex-col absolute left-1/2 right-1/2 inset-0 flex items-center justify-center z-10 transition-opacity duration-500 opacity-100 pointer-events-auto">
+        <div id="center-controls-mobile-only" class="flex justify-center items-center">
+            <!-- BACK 10s (mobile) -->
+            <button id="mobile-skip-backward-button" class="xl:hidden text-white hover:opacity-80 transition-opacity duration-200 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" aria-hidden="true"
+                     class="w-10 h-10 md:w-14 md:h-14" viewBox="0 0 24 24" data-icon="Back10Medium">
+                    <path fill="currentColor" fill-rule="evenodd"
+                          d="M11.02 2.05A10 10 0 1 1 2 12H0a12 12 0 1 0 5-9.75V1H3v4a1 1 0 0 0 1 1h4V4H6a10 10 0 0 1 5.02-1.95M2 4v3h3v2H1a1 1 0 0 1-1-1V4zm12.13 12q-.88 0-1.53-.42-.64-.44-1-1.22a5 5 0 0 1-.35-1.86q0-1.05.35-1.85.36-.79 1-1.22A2.7 2.7 0 0 1 14.13 9a2.65 2.65 0 0 1 2.52 1.65q.35.79.35 1.85 0 1.07-.35 1.86a3 3 0 0 1-1.01 1.22 2.7 2.7 0 0 1-1.52.42m0-1.35q.59 0 .91-.56.34-.56.34-1.59 0-1.01-.34-1.58-.33-.57-.91-.57-.6 0-.92.57-.34.56-.34 1.58t.34 1.6q.33.54.91.55m-5.53 1.2v-5.13l-1.6.42V9.82l3.2-.8v6.84z"
+                          clip-rule="evenodd"/>
+                </svg>
+            </button>
 
-    function insertLink(rel, href, as=null) {
-      const link = document.createElement("link");
-      link.rel = rel;
-      link.href = href;
-      if(as) link.as = as;
-      link.dataset.dynamic = "true";
-      document.head.appendChild(link);
-    }
+            <button id="center-play-pause-button"
+                    class="text-white md:p-4 hover:opacity-80 transition-opacity duration-200 focus:outline-none">
+                <svg id="center-play-icon" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                     aria-hidden="true" class="w-12 h-12 md:w-16 md:h-16" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                          d="M5 2.7a1 1 0 0 1 1.48-.88l16.93 9.3a1 1 0 0 1 0 1.76l-16.93 9.3A1 1 0 0 1 5 21.31z"/>
+                </svg>
+                <svg id="center-pause-icon" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                     aria-hidden="true" class="hidden w-12 h-12 md:w-16 md:h-16" viewBox="0 0 24 24">
+                    <path fill="currentColor" fill-rule="evenodd"
+                          d="M4.5 3a.5.5 0 0 0-.5.5v17c0 .28.22.5.5.5h5a.5.5 0 0 0 .5-.5v-17a.5.5 0 0 0-.5-.5zm10 0a.5.5 0 0 0-.5.5v17c0 .28.22.5.5.5h5a.5.5 0 0 0 .5-.5v-17a.5.5 0 0 0-.5-.5z"
+                          clip-rule="evenodd"/>
+                </svg>
+            </button>
 
-    async function insertSEO(data, type, year, embedUrl) {
-      removeOldSEO();
+            <!-- FORWARD 10s (mobile) -->
+            <button id="mobile-skip-forward-button"
+                    class="xl:hidden text-white hover:opacity-80 transition-opacity duration-200 focus:outline-none space-x-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none" aria-hidden="true"
+                     class="w-10 h-10 md:w-14 md:h-14" viewBox="0 0 24 24">
+                    <path fill="currentColor" fill-rule="evenodd"
+                          d="M6.44 3.69A10 10 0 0 1 18 4h-2v2h4a1 1 0 0 0 1-1V1h-2v1.25A12 12 0 1 0 24 12h-2A10 10 0 1 1 6.44 3.69M22 4v3h-3v2h4a1 1 0 0 0 1-1V4zm-9.4 11.58q.66.42 1.53.42a2.7 2.7 0 0 0 1.5-.42q.67-.44 1.02-1.22.35-.8.35-1.86 0-1.05-.35-1.85A2.65 2.65 0 0 0 14.13 9a2.7 2.7 0 0 0-1.53.43q-.64.44-1 1.22a4.5 4.5 0 0 0-.35 1.85q0 1.07.35 1.86.36.78 1 1.22m2.44-1.49q-.33.56-.91.56-.6 0-.92-.56-.34-.56-.34-1.59 0-1.01.34-1.58.33-.57.91-.57.6 0 .92.57.34.56.34 1.58t-.34 1.6zM8.6 10.72v5.14h1.6V9.02l-3.2.8v1.32z"
+                          clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 
-      const rawTitle = data.title || data.name;
-      const overview = (data.overview || "Watch online now.").slice(0,160);
-      const poster = data.poster_path 
-        ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
-        : "https://watchoutofficial2006.workers.dev/placeholder.jpg";
-      const url = window.location.href;
+    <!-- Bottom controls -->
+    <div id="bottom-overlay"
+         class="absolute inset-0 flex flex-col justify-end transition-opacity duration-500 controls-visible z-20 pointer-events-none">
+        <div id="controls-bar" class="w-full bg-gradient-to-t from-black/70 to-transparent flex flex-col space-y-2 md:space-y-3 pointer-events-auto">
+            <!-- Top bar: back · title · report -->
+            <div id="top-bar" class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 transition-opacity duration-500 controls-visible" style="height:4.5rem;">
+                <!-- Back button -->
+                <button id="back-button" class="text-white hover:opacity-80 transition-opacity duration-500 focus:outline-none flex-shrink-0 flex items-center justify-center" style="width:2.2rem;height:2.2rem;" onclick="(function(){ if(document.fullscreenElement && window.innerWidth < 1000){ document.exitFullscreen(); } else { window.history.back(); } })()">
+                    <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="2.2rem" height="2.2rem" data-icon="ArrowLeftMedium" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" role="img">
+                        <path fill="#FFFFFF" fill-rule="evenodd" d="M6.414 11H21v2H6.414l5.293 5.293-1.414 1.414-7-7a1 1 0 0 1 0-1.414l7-7 1.414 1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+                <!-- Mobile title (centre, mobile only) -->
+                <div id="mobile-title" class="flex flex-col items-center pointer-events-none" style="max-width:55vw;">
+                    <span id="mobile-title-main" class="text-white font-medium text-sm leading-tight text-center" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;"></span>
 
-      // Title
-      const pageTitle = `${rawTitle} (${year || ""}) | Watch Online Free`;
-      const titleTag = document.createElement("title");
-      titleTag.textContent = pageTitle;
-      titleTag.dataset.dynamic = "true";
-      document.head.appendChild(titleTag);
+                </div>
+                <!-- Report button -->
+                <button id="report-button" class="text-white hover:opacity-80 transition-opacity duration-500 focus:outline-none flex-shrink-0 flex items-center justify-center" style="width:2.2rem;height:2.2rem;">
+                    <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="2.2rem" height="2.2rem" data-icon="FlagMedium" data-icon-id=":r5q:" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" role="img">
+                        <path fill="#FFFFFF" fill-rule="evenodd" d="M3 2a1 1 0 0 0-1 1v19h2V10.579c1.85.029 3.241.142 5 .334v2.658a1 1 0 0 0 .726.962C13.026 15.473 15.873 16 21 16a1 1 0 0 0 1-1V8.429a1 1 0 0 0-1-1c-2.383 0-3.939-.117-6-.342V4.43a1 1 0 0 0-.726-.962C10.974 2.528 8.127 2 3 2m1 6.579c2.257.034 3.859.188 6.113.446l.887.101v3.685c2.616.706 5.052 1.123 9 1.182V9.42c-2.257-.034-3.859-.188-6.113-.446l-.887-.1V5.189c-2.616-.706-5.051-1.123-9-1.182z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            <!-- Timeline -->
+            <div id="timeline-row" class="flex items-center space-x-2 md:space-x-4 w-full">
+                <div id="seek-bar"
+                     class="relative flex-grow bg-white/30 cursor-pointer group">
+                    <div id="buffer-indicator"
+                         class="absolute inset-y-0 left-0 bg-white/50 transition-all duration-100"
+                         style="width:0%"></div>
+                    <div id="progress-indicator"
+                         class="absolute inset-y-0 left-0 transition-all duration-100"
+                         style="width:0%"></div>
+                    <div id="seek-thumb"
+                         class="absolute top-1/2 -translate-y-1/2 rounded-full transition-transform duration-150"
+                         style="left:0%"></div>
+                    <div id="seek-tooltip"></div>
+                </div>
+                <div class="flex items-center space-x-1 flex-shrink-0">
+                    <span id="remaining-time"
+                          class="text-white text-xs md:text-sm font-medium select-none w-10 md:w-12 text-center">0:00</span>
+                </div>
+            </div>
 
-      // Meta description + keywords
-      insertMeta("description", overview);
-      const keywords = [rawTitle, year, ...(data.genres ? data.genres.map(g=>g.name) : [])].join(", ");
-      insertMeta("keywords", keywords);
+            <!-- Bottom button row -->
+            <div id="bottom-controls-row" class="flex items-center justify-between" style="position:relative;">
+                <!-- Centered title display -->
+                <div id="title-display">
+                    <span class="title-main" id="title-main-text"></span>
 
-      // Open Graph
-      insertMeta("og:type", "video.movie", "property");
-      insertMeta("og:title", pageTitle, "property");
-      insertMeta("og:description", overview, "property");
-      insertMeta("og:image", poster, "property");
-      insertMeta("og:url", url, "property");
+                </div>
+                <div id="left-controlbuttons" class="flex items-center space-x-1 md:space-x-2">
+                    <!-- Play / Pause -->
+                    <button id="custom-play-button"
+                            class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 focus:outline-none">
+                        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                             aria-hidden="true" class="text-white w-6 h-6 md:w-full md:h-full" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                  d="M5 2.7a1 1 0 0 1 1.48-.88l16.93 9.3a1 1 0 0 1 0 1.76l-16.93 9.3A1 1 0 0 1 5 21.31z"/>
+                        </svg>
+                        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                             aria-hidden="true" class="text-white hidden w-6 h-6 md:w-full md:h-full" viewBox="0 0 24 24">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                  d="M4.5 3a.5.5 0 0 0-.5.5v17c0 .28.22.5.5.5h5a.5.5 0 0 0 .5-.5v-17a.5.5 0 0 0-.5-.5zm10 0a.5.5 0 0 0-.5.5v17c0 .28.22.5.5.5h5a.5.5 0 0 0 .5-.5v-17a.5.5 0 0 0-.5-.5z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
 
-      // Twitter
-      insertMeta("twitter:card", "summary_large_image");
-      insertMeta("twitter:title", pageTitle);
-      insertMeta("twitter:description", overview);
-      insertMeta("twitter:image", poster);
+                    <!-- BACK 10s (desktop) -->
+                    <button id="skip-backward-button"
+                            class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                             aria-hidden="true" class="text-white w-6 h-6 md:w-full md:h-full"
+                             viewBox="0 0 24 24" data-icon="Back10Medium">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                  d="M11.02 2.05A10 10 0 1 1 2 12H0a12 12 0 1 0 5-9.75V1H3v4a1 1 0 0 0 1 1h4V4H6a10 10 0 0 1 5.02-1.95M2 4v3h3v2H1a1 1 0 0 1-1-1V4zm12.13 12q-.88 0-1.53-.42-.64-.44-1-1.22a5 5 0 0 1-.35-1.86q0-1.05.35-1.85.36-.79 1-1.22A2.7 2.7 0 0 1 14.13 9a2.65 2.65 0 0 1 2.52 1.65q.35.79.35 1.85 0 1.07-.35 1.86a3 3 0 0 1-1.01 1.22 2.7 2.7 0 0 1-1.52.42m0-1.35q.59 0 .91-.56.34-.56.34-1.59 0-1.01-.34-1.58-.33-.57-.91-.57-.6 0-.92.57-.34.56-.34 1.58t.34 1.6q.33.54.91.55m-5.53 1.2v-5.13l-1.6.42V9.82l3.2-.8v6.84z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
 
-      // JSON-LD Structured Data
-      const structuredData = {
-        "@context": "https://schema.org",
-        "@type": "VideoObject",
-        "name": rawTitle,
-        "description": overview,
-        "thumbnailUrl": poster,
-        "uploadDate": new Date().toISOString(),
-        "genre": data.genres ? data.genres.map(g => g.name) : undefined,
-        "url": url,
-        "embedUrl": embedUrl, // Correct embedUrl with file_code
-        "publisher": {
-          "@type": "Organization",
-          "name": "WatchOut",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://i.ibb.co/fdNLmRw1/Indra-Embed-removebg-preview.png"
-          }
-        }
-      };
-      const script = document.createElement("script");
-      script.type = "application/ld+json";
-      script.textContent = JSON.stringify(structuredData);
-      script.dataset.dynamic = "true";
-      document.head.appendChild(script);
+                    <!-- FORWARD 10s -->
+                    <button id="skip-forward-button"
+                            class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                             aria-hidden="true" class="text-white w-6 h-6 md:w-full md:h-full" viewBox="0 0 24 24">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                  d="M6.44 3.69A10 10 0 0 1 18 4h-2v2h4a1 1 0 0 0 1-1V1h-2v1.25A12 12 0 1 0 24 12h-2A10 10 0 1 1 6.44 3.69M22 4v3h-3v2h4a1 1 0 0 0 1-1V4zm-9.4 11.58q.66.42 1.53.42a2.7 2.7 0 0 0 1.5-.42q.67-.44 1.02-1.22.35-.8.35-1.86 0-1.05-.35-1.85A2.65 2.65 0 0 0 14.13 9a2.7 2.7 0 0 0-1.53.43q-.64.44-1 1.22a4.5 4.5 0 0 0-.35 1.85q0 1.07.35 1.86.36.78 1 1.22m2.44-1.49q-.33.56-.91.56-.6 0-.92-.56-.34-.56-.34-1.59 0-1.01.34-1.58.33-.57.91-.57.6 0 .92.57.34.56.34 1.58t-.34 1.6zM8.6 10.72v5.14h1.6V9.02l-3.2.8v1.32z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
 
-      // Preload poster
-      insertLink("preload", poster, "image");
+                    <!-- Volume -->
+                    <div id="volume-control-wrapper" class="relative flex items-center h-10 md:h-9">
+                        <div id="volume-slider-container"
+                             class="absolute bottom-12 left-1/2 -translate-x-1/2 p-3 bg-black/80 rounded-lg shadow-2xl hidden transition-all duration-200">
+                            <div id="volume-slider-track"
+                                 class="relative w-2 h-24 bg-white/30 rounded-full cursor-pointer">
+                                <div id="volume-level"
+                                     class="absolute bottom-0 left-0 right-0 rounded-full"
+                                     style="background:rgb(225,0,0)"
+                                     style="height:100%"></div>
+                                <div id="volume-thumb-control"
+                                     class="absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full transition-transform duration-100"
+                                     style="bottom:0;background:rgb(225,0,0)"></div>
+                            </div>
+                        </div>
+                        <button id="mute-button"
+                                class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 cursor-pointer focus:outline-none z-30">
+                            <!-- Volume Low (0% < vol <= 33%) -->
+                            <svg id="volume-low-icon" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="100%" height="100%" data-icon="VolumeLowMedium" aria-hidden="true" class="text-white hidden w-6 h-6 md:w-full md:h-full" xmlns="http://www.w3.org/2000/svg" fill="none" role="img">
+                                <path fill="#FFFFFF" fill-rule="evenodd" d="M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zM16 12a6 6 0 0 0-1.76-4.24l-1.41 1.41a4 4 0 0 1 0 5.66l1.41 1.41A6 6 0 0 0 16 12" clip-rule="evenodd"></path>
+                            </svg>
+                            <!-- Volume Medium/Half (33% < vol <= 66%) -->
+                            <svg id="volume-medium-icon" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="100%" height="100%" data-icon="VolumeMediumMedium" aria-hidden="true" class="text-white hidden w-6 h-6 md:w-full md:h-full" xmlns="http://www.w3.org/2000/svg" fill="none" role="img">
+                                <path fill="#FFFFFF" fill-rule="evenodd" d="M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zm11.37-4.77a10 10 0 0 1 0 14.14l-1.41-1.41a8 8 0 0 0 0-11.32zm-2.83 2.83a6 6 0 0 1 0 8.48l-1.41-1.41a4 4 0 0 0 0-5.66z" clip-rule="evenodd"></path>
+                            </svg>
+                            <!-- Volume High (> 66%) -->
+                            <svg id="volume-high-icon" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="100%" height="100%" data-icon="VolumeHighMedium" aria-hidden="true" class="text-white hidden w-6 h-6 md:w-full md:h-full" xmlns="http://www.w3.org/2000/svg" fill="none" role="img">
+                                <path fill="#FFFFFF" fill-rule="evenodd" d="M24 12a14 14 0 0 0-4.1-9.9l-1.415 1.415a12 12 0 0 1 0 16.97L19.9 21.9A14 14 0 0 0 24 12M11 4a1 1 0 0 0-1.707-.707L4.586 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.586l4.707 4.707A1 1 0 0 0 11 20zM5.707 9.707 9 6.414v11.172l-3.293-3.293L5.414 14H2v-4h3.414zM16 12a6 6 0 0 0-1.757-4.243l-1.415 1.415a4 4 0 0 1 0 5.656l1.415 1.415A6 6 0 0 0 16 12m1.07-7.071a10 10 0 0 1 0 14.142l-1.413-1.414a8 8 0 0 0 0-11.314z" clip-rule="evenodd"></path>
+                            </svg>
+                            <svg id="volume-off-icon" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" class="text-white w-6 h-6 md:w-full md:h-full" xmlns="http://www.w3.org/2000/svg" fill="none" role="img">
+                                <path fill="#FFFFFF" fill-rule="evenodd" d="M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zm9.6 0 2.29 2.3-2.3 2.3 1.42 1.4L19 13.42l2.3 2.3 1.4-1.42-2.28-2.3 2.3-2.3-1.42-1.4-2.3 2.28-2.3-2.3z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
 
-      // Canonical image
-      insertLink("image_src", poster);
+                <div id="right-controlbuttons" class="flex items-center space-x-1 md:space-x-2 relative">
+                    <!-- Next Episode -->
+                    <button id="next-episode-button"
+                            class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 cursor-pointer focus:outline-none mobile-labeled-btn"
+                            title="Next Episode">
+                        <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="w-6 h-6 md:w-full md:h-full flex-shrink-0">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M22 3H20V21H22V3ZM4.28615 3.61729C3.28674 3.00228 2 3.7213 2 4.89478V19.1052C2 20.2787 3.28674 20.9977 4.28615 20.3827L15.8321 13.2775C16.7839 12.6918 16.7839 11.3082 15.8321 10.7225L4.28615 3.61729ZM4 18.2104V5.78956L14.092 12L4 18.2104Z" fill="currentColor"/>
+                        </svg>
+                        <span class="mobile-btn-label">Next Episode</span>
+                    </button>
+                    <!-- Audio & Subtitles -->
+                    <div class="relative" id="audio-subtitle-wrapper">
+                        <button id="audio-subtitle-toggle"
+                                class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 cursor-pointer focus:outline-none mobile-labeled-btn"
+                                title="Audio & Subtitles">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                                 aria-hidden="true" class="w-6 h-6 md:w-full md:h-full flex-shrink-0" viewBox="0 0 24 24">
+                                <path fill="currentColor" fill-rule="evenodd"
+                                      d="M1 3a1 1 0 0 1 1-1h20a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3v3a1 1 0 0 1-1.55.83L11.7 18H2a1 1 0 0 1-1-1zm2 1v12h9.3l.25.17L17 19.13V16h4V4zm7 5H5V7h5zm9 2h-5v2h5zm-7 2H5v-2h7zm7-6h-7v2h7z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                            <span class="mobile-btn-label">Audio &amp; Subtitles</span>
+                        </button>
+                        <div id="audio-subtitle-menu"
+                             class="absolute bottom-12 right-0 w-72 max-w-[85vw] md:w-[450px] rounded-[0.4rem] shadow-2xl p-4 hidden text-white transition-opacity duration-200"
+                             style="background-color:#262626">
+                            <!-- Scrollable content -->
+                            <div id="audio-subtitle-menu-inner">
+                                <div class="flex gap-4">
+                                    <div id="audio-tracks-container"
+                                         class="flex-1 flex flex-col min-h-0 pr-2">
+                                        <h4 class="mb-2 text-gray-200 pb-1 flex-shrink-0" style="font-size:16px;font-weight:700;">
+                                            Audio
+                                        </h4>
+                                        <ul id="audio-list" class="space-y-1 text-sm overflow-y-auto max-h-56">
+                                            <li class="text-gray-400">Loading tracks...</li>
+                                        </ul>
+                                    </div>
+                                    <div id="subtitle-tracks-container"
+                                         class="flex-1 flex flex-col min-h-0 pl-2 border-l border-gray-700">
+                                        <h4 class="mb-2 text-gray-200 pb-1 flex-shrink-0" style="font-size:16px;font-weight:700;">
+                                            Subtitles
+                                        </h4>
+                                        <ul id="subtitle-list" class="space-y-1 text-sm overflow-y-auto max-h-56">
+                                            <li class="text-gray-400">Loading tracks...</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Mobile-only footer -->
+                            <div id="audio-subtitle-menu-footer" style="display:none;position: absolute;bottom: 0;right: 0;background:transparent;justify-content:flex-end;gap:8px;padding:12px 16px;flex-shrink:0;">
+                                <button onclick="toggleAudioSubtitleMenu()" style="background:#242424;color:#fff;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;border-radius:2px;">Cancel</button>
+                                <button onclick="toggleAudioSubtitleMenu()" style="background:white;border:none;color:#000;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;border-radius:2px;">Apply</button>
+                            </div>
+                        </div>
+                    </div>
 
-      // Insert hidden poster image
-      const img = document.createElement("img");
-      img.id = "poster";
-      img.src = poster;
-      img.alt = rawTitle;
-      img.style.display = "none";
-      const container = document.getElementById("poster-container");
-      container.innerHTML = "";
-      container.appendChild(img);
-    }
+                    <!-- SPEED & QUALITY -->
+                    <div class="relative" id="speed-quality-wrapper">
+                        <button id="speed-button"
+                                class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 cursor-pointer focus:outline-none mobile-labeled-btn"
+                                title="Speed & Quality">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="none"
+                                 aria-hidden="true" class="w-6 h-6 md:w-full md:h-full flex-shrink-0"
+                                 viewBox="0 0 24 24" data-icon="InternetSpeedMedium">
+                                <path fill="currentColor" fill-rule="evenodd"
+                                      d="M19.06 6.27a9.7 9.7 0 0 0-14.12 0 10.8 10.8 0 0 0 0 14.82L3.5 22.47a12.8 12.8 0 0 1 0-17.59 11.7 11.7 0 0 1 17 0 12.8 12.8 0 0 1 0 17.59l-1.44-1.38a10.8 10.8 0 0 0 0-14.82M15 14a3 3 0 1 1-1.7-2.7l3-3 1.4 1.4-3 3q.3.6.3 1.3"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                            <span class="mobile-btn-label">Speed &amp; Quality</span>
+                        </button>
+                        <div id="speed-quality-menu"
+                             class="absolute bottom-12 right-0 w-72 max-w-[85vw] md:w-[450px] rounded-[0.4rem] shadow-2xl p-4 hidden text-white transition-opacity duration-200"
+                             style="background-color:#262626">
+                            <div id="speed-quality-menu-inner">
+                                <div class="flex gap-4">
+                                    <div id="speed-tracks-container"
+                                         class="flex-1 flex flex-col min-h-0 pr-2">
+                                        <h4 class="mb-2 text-gray-200 pb-1 flex-shrink-0" style="font-size:16px;font-weight:700;">
+                                            Speed
+                                        </h4>
+                                        <ul id="speed-list" class="space-y-1 text-sm overflow-y-auto max-h-56"></ul>
+                                    </div>
+                                    <div id="quality-tracks-container"
+                                         class="flex-1 flex flex-col min-h-0 pl-2 border-l border-gray-700">
+                                        <h4 class="mb-2 text-gray-200 pb-1 flex-shrink-0" style="font-size:16px;font-weight:700;">
+                                            Quality
+                                        </h4>
+                                        <ul id="quality-list" class="space-y-1 text-sm overflow-y-auto max-h-56">
+                                            <li class="text-gray-400">Loading…</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Mobile-only footer -->
+                            <div id="speed-quality-menu-footer" style="display:none;position:absolute;width:100%;bottom:0;right:0;background:transparent;justify-content:flex-end;gap:8px;padding:12px 16px;flex-shrink:0;">
+                                <button onclick="toggleSpeedQualityMenu()" style="background:#242424;color:#fff;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;border-radius:2px;">Cancel</button>
+                                <button onclick="toggleSpeedQualityMenu()" style="background:white;border:none;color:#000;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;border-radius:2px;">Done</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Video Fit Toggle -->
+                    <button id="fit-button" title="Video Fit" class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 cursor-pointer focus:outline-none mobile-labeled-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="text-white w-6 h-6 md:w-full md:h-full" viewBox="0 0 472 384"><path fill="currentColor" d="M384 192v107H277v-43h64v-64h43zm-256-64v64H85V85h107v43h-64zM427 0q17 0 29.5 12.5T469 43v298q0 18-12.5 30.5T427 384H43q-18 0-30.5-12.5T0 341V43q0-18 12.5-30.5T43 0h384zm0 342V42H43v300h384z"></path></svg>
+                    </button>
 
-    async function loadPlayer() {
-      const [type, tmdbId, season, episode] = window.location.pathname.split("/").filter(Boolean);
-      if (!tmdbId || !["movie", "tv"].includes(type)) {
-        document.getElementById("player-container").innerHTML = '<h1 class="fallback">Invalid TMDB ID or type</h1>';
-        return;
-      }
+                    <!-- Fullscreen -->
+                    <button id="fullscreen-button"
+                            class="bottom-control-button text-white flex items-center justify-center md:h-9 md:w-9 flex-shrink-0 cursor-pointer focus:outline-none mobile-labeled-btn">
+                        <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+                             fill="none" aria-hidden="true" class="text-white w-6 h-6 md:w-full md:h-full"
+                             viewBox="0 0 24 24">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                  d="M0 5c0-1.1.9-2 2-2h7v2H2v4H0zm22 0h-7V3h7a2 2 0 0 1 2 2v4h-2zM2 15v4h7v2H2a2 2 0 0 1-2-2v-4zm20 4v-4h2v4a2 2 0 0 1-2 2h-7v-2z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        <svg id="fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+                             fill="none" aria-hidden="true" class="text-white hidden w-6 h-6 md:w-full md:h-full"
+                             viewBox="0 0 24 24">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                  d="M24 8h-5V3h-2v7h7zM0 16h5v5h2v-7H0zm7-6H0V8h5V3h2zm12 11v-5h5v-2h-7v7z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      try {
-        const tmdbRes = await fetch(`https://search-proxy.bingeoutofficial.workers.dev/${type}/${tmdbId}`);
-        const tmdbData = await tmdbRes.json();
-        const rawTitle = tmdbData.title || tmdbData.name;
-        const year = (tmdbData.release_date || tmdbData.first_air_date || "").split("-")[0];
+    <!-- IntroDB skip prompt (intro / recap / credits / preview) -->
+    <div id="skip-prompt">
+        <button id="skip-prompt-btn" onclick="skipPromptAction()">Skip Intro</button>
+    </div>
 
-        let fullTitle = sanitizeTitle(rawTitle);
-        if (type === "movie") fullTitle = year ? `${fullTitle}.${year}` : fullTitle;
-        if (type === "tv" && season && episode) {
-          fullTitle += `.S${season.padStart(2,"0")}E${episode.padStart(2,"0")}`;
-        }
+    <div id="error-message"
+         class="absolute top-0 left-1/2 -translate-x-1/2 mt-4 p-3 bg-red-800 text-white text-sm rounded-lg shadow-xl hidden z-30"></div>
 
-        const apiRes = await fetch(`https://hlsworker.watchoutofficial2006.workers.dev/?title=${encodeURIComponent(fullTitle)}`);
-        const { result } = await apiRes.json();
-        const file = result?.files?.[0];
+    <!-- Report Issue Modal (inside video-container so it works in fullscreen) -->
+    <div class="report-modal" id="reportModal">
+      <div class="report-modal-box">
+        <div class="report-modal-header">
+          <h2 class="report-modal-title">Report an Issue</h2>
+          <button class="report-close-btn" onclick="closeReportModal()">&times;</button>
+        </div>
+        <div class="report-modal-body">
+          <label for="issueType">Issue Type</label>
+          <select id="issueType">
+            <option value="">Select an issue</option>
+            <option value="video">Video not playing</option>
+            <option value="audio">Audio issue</option>
+            <option value="subtitle">Subtitle issue</option>
+            <option value="buffer">Buffering or slow playback</option>
+            <option value="other">Other</option>
+          </select>
+          <label for="issueDesc">Description (optional)</label>
+          <textarea id="issueDesc" placeholder="Describe the problem"></textarea>
+        </div>
+        <div class="report-modal-footer">
+          <button class="report-submit-btn" id="submitBtn" onclick="submitIssue()" disabled>
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+</div>
 
-        const playerContainer = document.getElementById("player-container");
-        if (file?.file_code) {
-          const playerBaseUrl = await getRegionBasedPlayerBaseUrl();
-          const embedUrl = `${playerBaseUrl}/#${file.file_code}`;
+<script>
+/* -------------------------------------------------------------------------
+   DOM ELEMENTS
+   ------------------------------------------------------------------------- */
+const video                = document.getElementById('video');
+const videoContainer       = document.getElementById('video-container');
+const errorMessageDiv      = document.getElementById('error-message');
+const skipHint             = document.getElementById('skip-hint');
 
-          // Insert SEO now that we have correct embedUrl
-          await insertSEO(tmdbData, type, year, embedUrl);
+const topOverlay           = document.getElementById('top-overlay');
+const bottomOverlay        = document.getElementById('bottom-overlay');
+const customPlayButton     = document.getElementById('custom-play-button');
+const playIcon             = document.getElementById('play-icon');
+const pauseIcon            = document.getElementById('pause-icon');
 
-          playerContainer.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+const volumeControlWrapper = document.getElementById('volume-control-wrapper');
+const muteButton           = document.getElementById('mute-button');
+const volumeLowIcon        = document.getElementById('volume-low-icon');
+const volumeMediumIcon     = document.getElementById('volume-medium-icon');
+const volumeHighIcon       = document.getElementById('volume-high-icon');
+const volumeOffIcon        = document.getElementById('volume-off-icon');
+const volumeSliderContainer= document.getElementById('volume-slider-container');
+const volumeSliderTrack    = document.getElementById('volume-slider-track');
+const volumeLevel          = document.getElementById('volume-level');
+const volumeThumbControl   = document.getElementById('volume-thumb-control');
+
+const seekBar              = document.getElementById('seek-bar');
+const bufferIndicator      = document.getElementById('buffer-indicator');
+const progressIndicator    = document.getElementById('progress-indicator');
+const seekThumb            = document.getElementById('seek-thumb');
+const remainingTimeDisplay = document.getElementById('remaining-time');
+
+const fullscreenButton     = document.getElementById('fullscreen-button');
+const fullscreenEnterIcon  = document.getElementById('fullscreen-enter-icon');
+const fullscreenExitIcon   = document.getElementById('fullscreen-exit-icon');
+
+const skipBackwardButton   = document.getElementById('skip-backward-button');
+const skipForwardButton    = document.getElementById('skip-forward-button');
+
+const loadingIndicator     = document.getElementById('loading-indicator');
+
+const audioSubtitleToggle  = document.getElementById('audio-subtitle-toggle');
+const audioSubtitleMenu    = document.getElementById('audio-subtitle-menu');
+const audioList            = document.getElementById('audio-list');
+const subtitleList         = document.getElementById('subtitle-list');
+
+const centerPlayPauseOverlay = document.getElementById('center-play-pause-overlay');
+const centerPlayPauseButton  = document.getElementById('center-play-pause-button');
+const centerPlayIcon        = document.getElementById('center-play-icon');
+const centerPauseIcon       = document.getElementById('center-pause-icon');
+
+const mobileSkipBackwardButton = document.getElementById('mobile-skip-backward-button');
+const mobileSkipForwardButton  = document.getElementById('mobile-skip-forward-button');
+
+/* -------------------------------------------------------------------------
+   DOUBLE-TAP SKIP + LEFT/RIGHT HINT
+   ------------------------------------------------------------------------- */
+let lastTap = 0;
+videoContainer.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTap < 350) {
+        const rect = video.getBoundingClientRect();
+        const x = e.changedTouches[0].clientX - rect.left;
+        if (x < rect.width / 2) {
+            handleSkipBackward();
         } else {
-          const fallback = type === "tv" && season && episode
-            ? `https://player.videasy.net/tv/${tmdbId}/${season}/${episode}`
-            : `https://player.videasy.net/movie/${tmdbId}`;
-
-          await insertSEO(tmdbData, type, year, fallback);
-
-          playerContainer.innerHTML = `<iframe src="${fallback}" allowfullscreen allow="autoplay; fullscreen"></iframe>`;
+            handleSkipForward();
         }
-      } catch {
-        document.getElementById("player-container").innerHTML = '<h1 class="fallback">Something went wrong</h1>';
-      }
+    }
+    lastTap = now;
+});
+
+function showSkipHint(text, isBackward) {
+    // skip hint disabled
+}
+
+function handleSkipBackward() {
+    video.currentTime = Math.max(0, video.currentTime - 10);
+    showSkipHint('-10 s', true);
+    resetInactivityTimer();
+}
+function handleSkipForward() {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    showSkipHint('+10 s', false);
+    resetInactivityTimer();
+}
+
+/* -------------------------------------------------------------------------
+   PLAYBACK‑SPEED UI
+   ------------------------------------------------------------------------- */
+const speedButton   = document.getElementById('speed-button');
+const speedList     = document.getElementById('speed-list');
+
+const SPEED_OPTIONS = [
+    { label: '0.25x', value: 0.25 },
+    { label: '0.5x',  value: 0.5 },
+    { label: '0.75x', value: 0.75 },
+    { label: 'Normal',value: 1 },
+    { label: '1.25x', value: 1.25 },
+    { label: '1.5x',  value: 1.5 },
+    { label: '1.75x', value: 1.75 },
+    { label: '2x',    value: 2 }
+];
+
+/* -------------------------------------------------------------------------
+   STATE & CONFIG
+   ------------------------------------------------------------------------- */
+const urlParams   = new URLSearchParams(window.location.search);
+
+let resolvedUrl   = null;   /* set once we know the final HLS URL */
+let hlsInstance   = null;
+let isHlsJsMode   = false;
+let inactivityTimer;
+const INACTIVITY_TIMEOUT = 3000;
+
+let isSeeking        = false;
+let isVolumeAdjusting = false;
+let lastKnownVolume   = 0.5;
+
+let currentMouseMoveHandler = null;
+let currentTouchMoveHandler = null;
+
+/* resume‑progress */
+let videoStorageKey   = null;
+let hasRestoredPosition = false;
+let saveProgressInterval = null;
+
+/* -------------------------------------------------------------------------
+   INTRODB TIMESTAMPS
+   ------------------------------------------------------------------------- */
+const INTRODB_API = 'https://api.theintrodb.org/v3/media';
+
+/* Holds the parsed timestamp data for the current media item.
+   Shape mirrors the API response: { intro, recap, credits, preview } —
+   each an array of { start_ms, end_ms } objects (nulls possible). */
+let _introdbData = null;
+
+/* The active skip segment currently being shown to the user, or null.
+   Shape: { type: 'intro'|'recap'|'credits'|'preview', end_ms: number } */
+let _activeSkipSegment = null;
+
+/* language mapping */
+const languageCodeMap = {
+    'eng':'English','en':'English','und':'Undefined',
+    'hin':'Hindi','hi':'Hindi',
+    'tel':'Telugu','te':'Telugu',
+    'tam':'Tamil','ta':'Tamil',
+    'kan':'Kannada','kn':'Kannada',
+    'spa':'Spanish','es':'Spanish',
+    'fre':'French','fr':'French',
+    'ger':'German','de':'German',
+    'ita':'Italian','it':'Italian',
+    'jpn':'Japanese','ja':'Japanese',
+    'por':'Portuguese','pt':'Portuguese',
+    'rus':'Russian','ru':'Russian',
+    'zho':'Chinese','zh':'Chinese',
+    'ara':'Arabic','ar':'Arabic',
+    'kor':'Korean','ko':'Korean','tl':'Filipino','id':'Indonesian','km':'Khmer','ms':'Malay'
+};
+function getFullLanguageName(code) {
+    if (!code) return '';
+    const lc = code.toLowerCase();
+    return languageCodeMap[lc] || code.charAt(0).toUpperCase() + code.slice(1);
+}
+
+/* -------------------------------------------------------------------------
+   UI HELPERS
+   ------------------------------------------------------------------------- */
+function displayError(msg) {
+    console.error(msg);
+    errorMessageDiv.textContent = msg;
+    errorMessageDiv.classList.remove('hidden');
+}
+function showLoader() {
+    loadingIndicator.classList.remove('hidden');
+    centerPlayPauseOverlay.classList.remove('opacity-100','pointer-events-auto');
+    centerPlayPauseOverlay.classList.add('opacity-0','pointer-events-none');
+}
+function hideLoader() {
+    loadingIndicator.classList.add('hidden');
+    resetInactivityTimer();
+}
+function formatTime(totalSec) {
+    if (isNaN(totalSec) || totalSec < 0) return '0:00';
+    const sec = Math.floor(totalSec % 60);
+    const min = Math.floor(totalSec / 60) % 60;
+    const hrs = Math.floor(totalSec / 3600);
+    const pad = n => n.toString().padStart(2,'0');
+    return hrs ? `${hrs}:${pad(min)}:${pad(sec)}` : `${min}:${pad(sec)}`;
+}
+function updateBufferProgress() {
+    if (!video.duration || video.duration === Infinity) return;
+    const buffered = video.buffered;
+    if (buffered.length === 0) { bufferIndicator.style.width = '0%'; return; }
+    let furthest = 0;
+    for (let i = 0; i < buffered.length; i++) furthest = Math.max(furthest, buffered.end(i));
+    bufferIndicator.style.width = `${Math.min(100, (furthest / video.duration) * 100)}%`;
+}
+function updateProgress() {
+    if (!video.duration || isSeeking) return;
+    const pct = (video.currentTime / video.duration) * 100;
+    progressIndicator.style.width = `${pct}%`;
+    seekThumb.style.left = `calc(${pct}% - 3px)`;
+    remainingTimeDisplay.textContent = `${formatTime(video.duration - video.currentTime)}`;
+}
+function showControls() {
+    if (!loadingIndicator.classList.contains('hidden')) {
+        bottomOverlay.classList.remove('controls-hidden');
+        bottomOverlay.classList.add('controls-visible');
+        return;
+    }
+    bottomOverlay.classList.remove('controls-hidden');
+    bottomOverlay.classList.add('controls-visible');
+    centerPlayPauseOverlay.classList.remove('opacity-0','pointer-events-none');
+    centerPlayPauseOverlay.classList.add('opacity-100','pointer-events-auto');
+}
+function hideControls() {
+    if (audioSubtitleMenu.classList.contains('hidden') && speedQualityMenu.classList.contains('hidden')) {
+        bottomOverlay.classList.remove('controls-visible');
+        bottomOverlay.classList.add('controls-hidden');
+        centerPlayPauseOverlay.classList.remove('opacity-100','pointer-events-auto');
+        centerPlayPauseOverlay.classList.add('opacity-0','pointer-events-none');
+    }
+}
+function updateBottomPlayPauseIcon(paused) {
+    if (paused) { playIcon.classList.remove('hidden'); pauseIcon.classList.add('hidden'); }
+    else        { playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden'); }
+}
+function updateCenterPlayPauseIcon(paused) {
+    centerPlayPauseButton.classList.remove('hidden');
+    if (paused) { centerPlayIcon.classList.remove('hidden'); centerPauseIcon.classList.add('hidden'); }
+    else        { centerPlayIcon.classList.add('hidden'); centerPauseIcon.classList.remove('hidden'); }
+}
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    showControls();
+    if (!video.paused && !isSeeking && audioSubtitleMenu.classList.contains('hidden') &&
+        speedQualityMenu.classList.contains('hidden') && loadingIndicator.classList.contains('hidden')) {
+        inactivityTimer = setTimeout(hideControls, INACTIVITY_TIMEOUT);
+    }
+}
+function updateMuteIcon() {
+    const muted = video.muted || video.volume === 0;
+    const vol = video.muted ? 0 : video.volume;
+    volumeOffIcon.classList.toggle('hidden', !muted);
+    volumeLowIcon.classList.toggle('hidden',   muted || vol > 0.33);
+    volumeMediumIcon.classList.toggle('hidden', muted || vol <= 0.33 || vol > 0.66);
+    volumeHighIcon.classList.toggle('hidden',   muted || vol <= 0.66);
+}
+function updateVolumeSlider() {
+    const vol = video.muted ? 0 : video.volume;
+    volumeLevel.style.height = `${vol * 100}%`;
+    volumeThumbControl.style.bottom = `calc(${vol * 100}% - 8px)`;
+    updateMuteIcon();
+}
+function toggleMute() {
+    if (video.muted) {
+        video.volume = lastKnownVolume > 0 ? lastKnownVolume : 0.5;
+        video.muted = false;
+    } else {
+        lastKnownVolume = video.volume;
+        video.muted = true;
+    }
+    updateVolumeSlider();
+    resetInactivityTimer();
+}
+function toggleVideoPlayPause() {
+    if (audioSubtitleMenu.classList.contains('hidden') && speedQualityMenu.classList.contains('hidden') && loadingIndicator.classList.contains('hidden')) {
+        if (video.paused || video.ended) {
+            video.play().catch(e => displayError('Play failed: ' + e.message));
+        } else {
+            video.pause();
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------
+   SEEKING
+   ------------------------------------------------------------------------- */
+function calculateNewTime(clientX) {
+    const rect = seekBar.getBoundingClientRect();
+    let pos = clientX - rect.left;
+    pos = Math.max(0, Math.min(pos, rect.width));
+    return video.duration * (pos / rect.width);
+}
+function handleSeek(clientX) {
+    if (!video.duration || video.duration === Infinity) return;
+    const newTime = calculateNewTime(clientX);
+    const pct = (newTime / video.duration) * 100;
+    progressIndicator.style.width = `${pct}%`;
+    seekThumb.style.left = `calc(${pct}% - 3px)`;
+    remainingTimeDisplay.textContent = `-${formatTime(video.duration - newTime)}`;
+}
+function startSeeking(e) {
+    if (!video.duration || video.duration === Infinity) return;
+    isSeeking = true;
+    showControls();
+    seekThumb.classList.add('scale-100');
+
+    currentMouseMoveHandler = ev => handleSeek(ev.clientX);
+    currentTouchMoveHandler = ev => handleSeek(ev.touches[0].clientX);
+
+    window.addEventListener('mousemove', currentMouseMoveHandler);
+    window.addEventListener('mouseup', endSeeking);
+    window.addEventListener('touchmove', currentTouchMoveHandler, {passive:true});
+    window.addEventListener('touchend', endSeeking);
+
+    handleSeek(e.touches ? e.touches[0].clientX : e.clientX);
+}
+function endSeeking(e) {
+    if (!isSeeking) return;
+    const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    video.currentTime = calculateNewTime(x);
+    isSeeking = false;
+    seekThumb.classList.remove('scale-100');
+    if (currentMouseMoveHandler) {
+        window.removeEventListener('mousemove', currentMouseMoveHandler);
+        currentMouseMoveHandler = null;
+    }
+    window.removeEventListener('mouseup', endSeeking);
+    window.removeEventListener('touchend', endSeeking);
+    resetInactivityTimer();
+}
+
+/* -------------------------------------------------------------------------
+   FULLSCREEN
+   ------------------------------------------------------------------------- */
+function isMobileDevice() {
+    return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+           (navigator.maxTouchPoints > 1 && window.innerWidth <= 1024);
+}
+
+function lockLandscape() {
+    try {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+        }
+    } catch (e) {}
+}
+
+function unlockOrientation() {
+    try {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+    } catch (e) {}
+}
+
+function isInFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || video.webkitDisplayingFullscreen);
+}
+
+function toggleFullscreen() {
+    // iOS Safari: only <video> supports native fullscreen via webkitEnterFullscreen
+    if (video.webkitEnterFullscreen && !document.fullscreenElement && !document.webkitFullscreenElement) {
+        video.webkitEnterFullscreen();
+        return;
+    }
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) exit.call(document);
+        if (isMobileDevice()) unlockOrientation();
+    } else {
+        const req = videoContainer.requestFullscreen || videoContainer.webkitRequestFullscreen;
+        if (req) {
+            req.call(videoContainer, { navigationUI: 'hide' })
+                .then(() => { if (isMobileDevice()) lockLandscape(); })
+                .catch(err => displayError('Fullscreen error: ' + err.message));
+        }
+    }
+}
+function updateFullscreenIcon() {
+    const inFs = isInFullscreen();
+    fullscreenEnterIcon.classList.toggle('hidden', inFs);
+    fullscreenExitIcon.classList.toggle('hidden', !inFs);
+    if (!inFs && isMobileDevice()) unlockOrientation();
+}
+
+/* -------------------------------------------------------------------------
+   AUDIO / SUBTITLE MENU
+   ------------------------------------------------------------------------- */
+function toggleAudioSubtitleMenu() {
+    const hidden = audioSubtitleMenu.classList.contains('hidden');
+    // Close speed-quality menu if open
+    speedQualityMenu.classList.add('hidden');
+    if (hidden) {
+        renderTracksMenu();
+        audioSubtitleMenu.classList.remove('hidden');
+        clearTimeout(inactivityTimer);
+        showControls();
+    } else {
+        audioSubtitleMenu.classList.add('hidden');
+        resetInactivityTimer();
+    }
+}
+function handleDocumentClick(e) {
+    if (!audioSubtitleMenu.classList.contains('hidden') &&
+        !audioSubtitleMenu.contains(e.target) &&
+        !audioSubtitleToggle.contains(e.target) &&
+        window.innerWidth >= 1000) {
+        audioSubtitleMenu.classList.add('hidden');
+        resetInactivityTimer();
+    }
+    if (!speedQualityMenu.classList.contains('hidden') &&
+        !speedQualityMenu.contains(e.target) &&
+        !speedButton.contains(e.target) &&
+        window.innerWidth >= 1000) {
+        speedQualityMenu.classList.add('hidden');
+        resetInactivityTimer();
+    }
+}
+function renderTracksMenu() {
+    audioList.innerHTML = '';
+    subtitleList.innerHTML = '';
+
+    const getDisplayName = (track, isHls) => {
+        const raw = isHls ? track.lang : track.language;
+        const primary = isHls ? track.name : track.label;
+        let name = raw ? getFullLanguageName(raw) : '';
+        if (primary) {
+            const l = primary.toLowerCase();
+            if (languageCodeMap[l]) name = languageCodeMap[l];
+            else if (!name || name.toLowerCase() === 'undefined' || name.toLowerCase() === raw?.toLowerCase())
+                name = primary;
+        }
+        return name || `Track ${track.id ?? track.groupId ?? ''}`;
+    };
+
+    const audioTracks = isHlsJsMode ? hlsInstance.audioTracks : (video.audioTracks ? Array.from(video.audioTracks) : []);
+    const curAudioIdx = isHlsJsMode ? hlsInstance.audioTrack : (video.audioTracks ? Array.from(video.audioTracks).findIndex(t=>t.enabled) : -1);
+
+    if (!audioTracks.length) {
+        audioList.innerHTML = '<li class="text-gray-400">No alternate audio tracks found.</li>';
+    } else {
+        audioTracks.forEach((track, i) => {
+            const selected = isHlsJsMode ? (i === curAudioIdx) : track.enabled;
+            const li = document.createElement('li');
+            li.className = `track-selector cursor-pointer flex items-center gap-2 ${selected?'font-bold text-white':'text-gray-400'}`;
+            const check = document.createElement('span');
+            check.style.cssText = `visibility:${selected?'visible':'hidden'};flex-shrink:0;display:inline-flex;align-items:center;`;
+            check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2928 4.29285L22.7071 5.70706L8.70706 19.7071C8.51952 19.8946 8.26517 20 7.99995 20C7.73474 20 7.48038 19.8946 7.29285 19.7071L0.292847 12.7071L1.70706 11.2928L7.99995 17.5857L21.2928 4.29285Z" fill="white"></path></svg>`;
+            const label = document.createElement('span');
+            label.textContent = getDisplayName(track, isHlsJsMode);
+            li.appendChild(check);
+            li.appendChild(label);
+            li.dataset.index = i;
+            li.dataset.type  = 'audio';
+            li.addEventListener('click', () => handleTrackSelection('audio', i));
+            audioList.appendChild(li);
+        });
     }
 
-    loadPlayer();
-  </script>
+    // Read all subtitle/caption tracks from video.textTracks
+    // They come from three sources: HLS (no data-* attr), GitHub (data-github), Wyzie (data-wyzie)
+    // We display them in order: HLS → GitHub → Wyzie
+    const allTextTracks = video.textTracks
+        ? Array.from(video.textTracks).filter(t => t.kind === 'subtitles' || t.kind === 'captions')
+        : [];
+
+    // Map each textTrack to its source by cross-referencing <track> elements
+    const trackElements = Array.from(video.querySelectorAll('track'));
+    function getTrackSource(textTrack) {
+        const el = trackElements.find(el =>
+            el.label === textTrack.label && el.srclang === textTrack.language
+        );
+        if (!el) return 'hls';
+        if (el.hasAttribute('data-wyzie'))  return 'wyzie';
+        if (el.hasAttribute('data-github')) return 'github';
+        return 'hls';
+    }
+
+    const hlsSubTracks    = (isHlsJsMode && hlsInstance) ? hlsInstance.subtitleTracks : [];
+
+    // Sort: HLS first, GitHub second, Wyzie third
+    const SOURCE_ORDER = { hls: 0, github: 1, wyzie: 2 };
+    const sortedTracks = allTextTracks
+        .map((t, i) => ({ track: t, originalIdx: i, source: getTrackSource(t) }))
+        .sort((a, b) => SOURCE_ORDER[a.source] - SOURCE_ORDER[b.source]);
+
+    const curSubIdx = allTextTracks.findIndex(t => t.mode === 'showing');
+
+    // Off button
+    const offLi = document.createElement('li');
+    offLi.className = `track-selector cursor-pointer flex items-center gap-2 ${curSubIdx === -1 ? 'font-bold text-white' : 'text-gray-400'}`;
+    const offCheck = document.createElement('span');
+    offCheck.textContent = '✓';
+    offCheck.style.cssText = `visibility:${curSubIdx === -1 ?'visible':'hidden'};flex-shrink:0;display:inline-flex;align-items:center;`;
+    offCheck.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2928 4.29285L22.7071 5.70706L8.70706 19.7071C8.51952 19.8946 8.26517 20 7.99995 20C7.73474 20 7.48038 19.8946 7.29285 19.7071L0.292847 12.7071L1.70706 11.2928L7.99995 17.5857L21.2928 4.29285Z" fill="white"></path></svg>`;
+    const offLabel = document.createElement('span');
+    offLabel.textContent = 'Off';
+    offLi.appendChild(offCheck);
+    offLi.appendChild(offLabel);
+    offLi.dataset.index = -1;
+    offLi.dataset.type  = 'subtitle';
+    offLi.addEventListener('click', () => handleTrackSelection('subtitle', -1));
+    subtitleList.appendChild(offLi);
+
+    if (!sortedTracks.length) {
+        if (_wyzieLoading) {
+            // Wyzie still pending and no tracks from any source yet — show spinner only
+            const li = document.createElement('li');
+            li.className = 'text-gray-400 flex items-center gap-2';
+            li.style.cssText = 'padding: 6px 10px; font-size: 0.85em;';
+            li.innerHTML = `<svg style="flex-shrink:0;animation:spin 1s linear infinite" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.3" d="M12 2a10 10 0 1 0 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> Loading subtitles…`;
+            subtitleList.appendChild(li);
+        } else {
+            // Wyzie done and still nothing — safe to say no subtitles
+            subtitleList.innerHTML += '<li class="text-gray-400">No subtitle tracks found.</li>';
+        }
+    } else {
+        let lastSource = null;
+        sortedTracks.forEach(({ track, originalIdx, source }) => {
+            const selected = track.mode === 'showing';
+
+            // Source group label dividers removed
+            if (source !== lastSource) {
+                lastSource = source;
+            }
+
+            const hlsIdx = hlsSubTracks.findIndex(h => h.name === track.label || h.lang === track.language);
+            const isHlsManaged = source === 'hls' && hlsIdx !== -1;
+
+            // Detect if this is a Wyzie lazy (not-yet-downloaded) track
+            const trackEl = Array.from(video.querySelectorAll('track[data-wyzie]'))
+                .find(el => el.label === track.label && el.srclang === track.language);
+            const isLazy = trackEl && trackEl.hasAttribute('data-lazy-url');
+
+            const li = document.createElement('li');
+            li.className = `track-selector cursor-pointer flex items-center gap-2 ${selected ? 'font-bold text-white' : 'text-gray-400'}`;
+            const check = document.createElement('span');
+            check.style.cssText = `visibility:${selected?'visible':'hidden'};flex-shrink:0;display:inline-flex;align-items:center;`;
+            check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2928 4.29285L22.7071 5.70706L8.70706 19.7071C8.51952 19.8946 8.26517 20 7.99995 20C7.73474 20 7.48038 19.8946 7.29285 19.7071L0.292847 12.7071L1.70706 11.2928L7.99995 17.5857L21.2928 4.29285Z" fill="white"></path></svg>`;
+            const label = document.createElement('span');
+            const displayName = getDisplayName(track, false);
+            // [CC] = HLS or GitHub original, lazy Wyzie tracks get no suffix until loaded
+            let labelText = (source === 'hls' || source === 'github') ? `${displayName} [CC]` : displayName;
+            label.textContent = labelText;
+            li.appendChild(check);
+            li.appendChild(label);
+            li.dataset.index  = originalIdx;
+            li.dataset.type   = 'subtitle';
+            li.dataset.hlsIdx = isHlsManaged ? hlsIdx : '';
+            li.addEventListener('click', () => handleTrackSelection('subtitle', originalIdx, isHlsManaged ? hlsIdx : -2));
+            subtitleList.appendChild(li);
+
+            // Use a flag to avoid attaching duplicate listeners across re-renders
+            if (!track._menuListenerAttached) {
+                track._menuListenerAttached = true;
+                track.addEventListener('change', renderTracksMenu);
+            }
+        });
+
+        // HLS/GitHub tracks exist but Wyzie still loading — show spinner at the bottom
+        const hasWyzieTracks = sortedTracks.some(t => t.source === 'wyzie');
+        if (_wyzieLoading && !hasWyzieTracks) {
+            const li = document.createElement('li');
+            li.className = 'text-gray-400 flex items-center gap-2';
+            li.style.cssText = 'padding: 6px 10px; font-size: 0.85em;';
+            li.innerHTML = `<svg style="flex-shrink:0;animation:spin 1s linear infinite" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.3" d="M12 2a10 10 0 1 0 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> Loading subtitles…`;
+            subtitleList.appendChild(li);
+        }
+    }
+}
+function handleTrackSelection(type, idx, hlsIdx) {
+    if (type === 'audio') {
+        if (isHlsJsMode && hlsInstance) hlsInstance.audioTrack = idx;
+        else if (video.audioTracks) {
+            for (let i=0;i<video.audioTracks.length;i++) video.audioTracks[i].enabled = (i===idx);
+        }
+        audioSubtitleMenu.classList.add('hidden');
+        renderTracksMenu();
+        resetInactivityTimer();
+        return;
+    }
+
+    if (type !== 'subtitle') return;
+
+    const subs = video.textTracks
+        ? Array.from(video.textTracks).filter(t => t.kind === 'subtitles' || t.kind === 'captions')
+        : [];
+
+    // Turn off — no async needed
+    if (idx === -1) {
+        if (isHlsJsMode && hlsInstance) hlsInstance.subtitleTrack = -1;
+        subs.forEach(t => t.mode = 'disabled');
+        audioSubtitleMenu.classList.add('hidden');
+        renderTracksMenu();
+        resetInactivityTimer();
+        return;
+    }
+
+    // Check if selected track is a lazy (not-yet-loaded) Wyzie track
+    const trackElements = Array.from(video.querySelectorAll('track'));
+    const targetTextTrack = subs[idx];
+    const matchingEl = targetTextTrack
+        ? trackElements.find(el =>
+            el.hasAttribute('data-wyzie') &&
+            el.hasAttribute('data-lazy-url') &&
+            el.label === targetTextTrack.label &&
+            el.srclang === targetTextTrack.language)
+        : null;
+
+    if (matchingEl) {
+        // Wyzie lazy track — disable all others first so nothing overlaps during fetch
+        if (isHlsJsMode && hlsInstance) hlsInstance.subtitleTrack = -1;
+        subs.forEach(t => { t.mode = 'disabled'; });
+
+        // Show a loading indicator on the menu item (keep menu open)
+        const menuItems = document.querySelectorAll('#subtitle-list .track-selector');
+        menuItems.forEach((li, i) => {
+            // +1 because index 0 is the "Off" item
+            if (parseInt(li.dataset.index) === idx) {
+                li.style.opacity = '0.5';
+                li.style.pointerEvents = 'none';
+                const lbl = li.querySelector('span:last-child');
+                if (lbl) lbl.textContent += ' (loading…)';
+            }
+        });
+
+        // Fetch the SRT file now that the user has actually asked for it
+        fetchAndActivateWyzieTrack(matchingEl).then(ok => {
+            if (ok) {
+                // Now that the <track> has a real src, activate its textTrack
+                const freshSubs = Array.from(video.textTracks)
+                    .filter(t => t.kind === 'subtitles' || t.kind === 'captions');
+                freshSubs.forEach((t, i) => { t.mode = (i === idx) ? 'showing' : 'disabled'; });
+                // Safety check
+                const showing = freshSubs.filter(t => t.mode === 'showing');
+                if (showing.length > 1) showing.slice(1).forEach(t => { t.mode = 'disabled'; });
+            }
+            audioSubtitleMenu.classList.add('hidden');
+            renderTracksMenu();
+            resetInactivityTimer();
+        });
+        return; // exit — async path handles the rest
+    }
+
+    // HLS-managed track
+    if (hlsIdx !== undefined && hlsIdx >= 0) {
+        if (isHlsJsMode && hlsInstance) hlsInstance.subtitleTrack = hlsIdx;
+        subs.forEach((t, i) => { t.mode = (i === idx) ? 'showing' : 'disabled'; });
+    } else {
+        // GitHub or already-loaded Wyzie track
+        if (isHlsJsMode && hlsInstance) hlsInstance.subtitleTrack = -1;
+        subs.forEach((t, i) => { t.mode = (i === idx) ? 'showing' : 'disabled'; });
+    }
+
+    // Safety: ensure no two tracks are simultaneously showing
+    const showingTracks = subs.filter(t => t.mode === 'showing');
+    if (showingTracks.length > 1) showingTracks.slice(1).forEach(t => { t.mode = 'disabled'; });
+
+    audioSubtitleMenu.classList.add('hidden');
+    renderTracksMenu();
+    resetInactivityTimer();
+}
+
+/* -------------------------------------------------------------------------
+   SPEED & QUALITY COMBINED MENU
+   ------------------------------------------------------------------------- */
+const speedQualityMenu = document.getElementById('speed-quality-menu');
+const qualityList      = document.getElementById('quality-list');
+
+function renderSpeedList() {
+    speedList.innerHTML = '';
+    SPEED_OPTIONS.forEach(opt => {
+        const selected = video.playbackRate === opt.value;
+        const li = document.createElement('li');
+        li.className = `track-selector cursor-pointer flex items-center gap-2 ${selected ? 'font-bold text-white' : 'text-gray-400'}`;
+        const check = document.createElement('span');
+        check.style.cssText = `visibility:${selected ? 'visible' : 'hidden'};flex-shrink:0;display:inline-flex;align-items:center;`;
+        check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2928 4.29285L22.7071 5.70706L8.70706 19.7071C8.51952 19.8946 8.26517 20 7.99995 20C7.73474 20 7.48038 19.8946 7.29285 19.7071L0.292847 12.7071L1.70706 11.2928L7.99995 17.5857L21.2928 4.29285Z" fill="white"></path></svg>`;
+        const label = document.createElement('span');
+        label.textContent = opt.label;
+        li.appendChild(check);
+        li.appendChild(label);
+        li.addEventListener('click', () => {
+            video.playbackRate = opt.value;
+            renderSpeedList();
+            resetInactivityTimer();
+        });
+        speedList.appendChild(li);
+    });
+}
+
+function renderQualityList() {
+    qualityList.innerHTML = '';
+
+    const levels = (isHlsJsMode && hlsInstance) ? hlsInstance.levels : [];
+
+    if (!levels.length) {
+        qualityList.innerHTML = '<li class="text-gray-400" style="padding:6px 10px;">No quality levels found.</li>';
+        return;
+    }
+
+    const curLevel = isHlsJsMode ? hlsInstance.currentLevel : -1;
+
+    // Auto option
+    const autoSelected = isHlsJsMode && hlsInstance.autoLevelEnabled;
+    const autoLi = document.createElement('li');
+    autoLi.className = `track-selector cursor-pointer flex items-center gap-2 ${autoSelected ? 'font-bold text-white' : 'text-gray-400'}`;
+    const autoCheck = document.createElement('span');
+    autoCheck.style.cssText = `visibility:${autoSelected ? 'visible' : 'hidden'};flex-shrink:0;display:inline-flex;align-items:center;`;
+    autoCheck.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2928 4.29285L22.7071 5.70706L8.70706 19.7071C8.51952 19.8946 8.26517 20 7.99995 20C7.73474 20 7.48038 19.8946 7.29285 19.7071L0.292847 12.7071L1.70706 11.2928L7.99995 17.5857L21.2928 4.29285Z" fill="white"></path></svg>`;
+    const autoLabel = document.createElement('span');
+    autoLabel.textContent = 'Auto';
+    autoLi.appendChild(autoCheck);
+    autoLi.appendChild(autoLabel);
+    autoLi.addEventListener('click', () => {
+        if (isHlsJsMode && hlsInstance) hlsInstance.currentLevel = -1;
+        renderQualityList();
+        resetInactivityTimer();
+    });
+    qualityList.appendChild(autoLi);
+
+    // Sort levels highest → lowest by height (or bandwidth fallback)
+    const sorted = levels
+        .map((l, i) => ({ level: l, index: i }))
+        .sort((a, b) => (b.level.height || b.level.bitrate || 0) - (a.level.height || a.level.bitrate || 0));
+
+    sorted.forEach(({ level, index }) => {
+        const selected = !autoSelected && index === curLevel;
+        const li = document.createElement('li');
+        li.className = `track-selector cursor-pointer flex items-center gap-2 ${selected ? 'font-bold text-white' : 'text-gray-400'}`;
+        const check = document.createElement('span');
+        check.style.cssText = `visibility:${selected ? 'visible' : 'hidden'};flex-shrink:0;display:inline-flex;align-items:center;`;
+        check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.2928 4.29285L22.7071 5.70706L8.70706 19.7071C8.51952 19.8946 8.26517 20 7.99995 20C7.73474 20 7.48038 19.8946 7.29285 19.7071L0.292847 12.7071L1.70706 11.2928L7.99995 17.5857L21.2928 4.29285Z" fill="white"></path></svg>`;
+        const labelEl = document.createElement('span');
+        const res = level.height ? `${level.height}p` : (level.bitrate ? `${Math.round(level.bitrate/1000)}k` : `Level ${index}`);
+        labelEl.textContent = res;
+        li.appendChild(check);
+        li.appendChild(labelEl);
+        li.addEventListener('click', () => {
+            if (isHlsJsMode && hlsInstance) hlsInstance.currentLevel = index;
+            renderQualityList();
+            resetInactivityTimer();
+        });
+        qualityList.appendChild(li);
+    });
+}
+
+function renderSpeedQualityMenu() {
+    renderSpeedList();
+    renderQualityList();
+}
+
+function toggleSpeedQualityMenu() {
+    const hidden = speedQualityMenu.classList.contains('hidden');
+    // Close audio/subtitle menu if open
+    audioSubtitleMenu.classList.add('hidden');
+    if (hidden) {
+        renderSpeedQualityMenu();
+        speedQualityMenu.classList.remove('hidden');
+        clearTimeout(inactivityTimer);
+        showControls();
+    } else {
+        speedQualityMenu.classList.add('hidden');
+        resetInactivityTimer();
+    }
+}
+
+function setPlaybackSpeed(rate) {
+    video.playbackRate = rate;
+    renderSpeedList();
+    resetInactivityTimer();
+}
+
+function handleSpeedKeyboard(e) {
+    if (e.key === ',' || e.key === '<') {
+        e.preventDefault();
+        const cur = SPEED_OPTIONS.findIndex(o => o.value === video.playbackRate);
+        if (cur > 0) setPlaybackSpeed(SPEED_OPTIONS[cur-1].value);
+    } else if (e.key === '.' || e.key === '>') {
+        e.preventDefault();
+        const cur = SPEED_OPTIONS.findIndex(o => o.value === video.playbackRate);
+        if (cur < SPEED_OPTIONS.length-1) setPlaybackSpeed(SPEED_OPTIONS[cur+1].value);
+    }
+}
+speedButton.addEventListener('click', e => { e.stopPropagation(); toggleSpeedQualityMenu(); });
+document.addEventListener('click', handleDocumentClick);
+document.addEventListener('keydown', handleSpeedKeyboard);
+
+/* -------------------------------------------------------------------------
+   RESUME / LOCAL STORAGE
+   ------------------------------------------------------------------------- */
+function generateStorageKey(url) { return `video_progress:${url}`; }
+function saveVideoProgress() {
+    if (!video.duration || isNaN(video.duration) || video.duration === Infinity) return;
+    if (video.currentTime < 1 || video.currentTime > video.duration - 5) return;
+    try {
+        const data = { currentTime: video.currentTime, duration: video.duration, timestamp: Date.now(), url: resolvedUrl };
+        localStorage.setItem(videoStorageKey, JSON.stringify(data));
+    } catch (e) { console.error('save progress error', e); }
+}
+function restoreVideoProgress() {
+    if (hasRestoredPosition) return;
+    if (!video.duration || isNaN(video.duration) || video.duration === Infinity) return;
+    try {
+        const raw = localStorage.getItem(videoStorageKey);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data.url !== resolvedUrl || data.currentTime <= 1 || data.currentTime >= video.duration - 5) return;
+        hasRestoredPosition = true;
+        const seek = () => {
+            video.currentTime = data.currentTime;
+        };
+        if (video.readyState >= 2) seek();
+        else video.addEventListener('canplay', seek, {once:true});
+    } catch (e) { hasRestoredPosition = true; }
+}
+
+function clearVideoProgress() {
+    try { localStorage.removeItem(videoStorageKey); } catch (e) { console.error(e); }
+}
+function startProgressSaving() {
+    saveProgressInterval = setInterval(saveVideoProgress, 5000);
+    video.addEventListener('pause', saveVideoProgress);
+    video.addEventListener('seeking', saveVideoProgress);
+    video.addEventListener('ended', clearVideoProgress);
+    window.addEventListener('beforeunload', saveVideoProgress);
+}
+function stopProgressSaving() {
+    clearInterval(saveProgressInterval);
+    saveProgressInterval = null;
+    video.removeEventListener('pause', saveVideoProgress);
+    video.removeEventListener('seeking', saveVideoProgress);
+    video.removeEventListener('ended', clearVideoProgress);
+    window.removeEventListener('beforeunload', saveVideoProgress);
+}
+function getMediaInfoFromUrl() {
+    const path = window.location.pathname;
+
+    const tvMatch = path.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    if (tvMatch) {
+        return {
+            mediaType:     'tv',
+            contentId:     tvMatch[1],
+            seasonNumber:  Number(tvMatch[2]),
+            episodeNumber: Number(tvMatch[3]),
+        };
+    }
+
+    const movieMatch = path.match(/\/movie\/(\d+)/i);
+    if (movieMatch) {
+        return {
+            mediaType: 'movie',
+            contentId: movieMatch[1],
+        };
+    }
+
+    return { mediaType: null, contentId: null };
+}
+
+function postTimeUpdateToParent() {
+    if (window.parent !== window) {
+        window.parent.postMessage({
+            event: 'videoTimeUpdate',
+            currentTime: video.currentTime,
+            duration: video.duration,
+            paused: video.paused,
+            ...getMediaInfoFromUrl(),
+        }, '*');
+    }
+}
+
+/* -------------------------------------------------------------------------
+   INACTIVITY & GLOBAL EVENT BINDINGS
+   ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+   ONE-TIME UI CONTROL BINDINGS  –  called once on page load only
+   ------------------------------------------------------------------------- */
+function setupUIControls() {
+    const container = videoContainer;
+    ['mousemove','mousedown','touchstart','touchend'].forEach(ev => container.addEventListener(ev, resetInactivityTimer, ev.startsWith('touch') ? {passive:true} : false));
+
+    topOverlay.addEventListener('click', () => {
+        const mobile = window.innerWidth <= 1000;
+        if (mobile) {
+            const els = [document.getElementById('center-controls-mobile-only'), document.getElementById('controls-bar')];
+            const anyHidden = els.some(el => el.style.display === 'none');
+            els.forEach(el => el.style.display = anyHidden ? 'flex' : 'none');
+        } else {
+            toggleVideoPlayPause();
+        }
+    });
+
+    customPlayButton.addEventListener('click', toggleVideoPlayPause);
+    centerPlayPauseButton.addEventListener('click', toggleVideoPlayPause);
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+    skipBackwardButton.addEventListener('click', handleSkipBackward);
+    skipForwardButton.addEventListener('click', handleSkipForward);
+    mobileSkipBackwardButton.addEventListener('click', handleSkipBackward);
+    mobileSkipForwardButton.addEventListener('click', handleSkipForward);
+    muteButton.addEventListener('click', toggleMute);
+    audioSubtitleToggle.addEventListener('click', e => { e.stopPropagation(); toggleAudioSubtitleMenu(); });
+
+    seekBar.addEventListener('mousedown', startSeeking);
+    seekBar.addEventListener('touchstart', startSeeking, {passive:true});
+
+    // ---- Seek bar hover timestamp tooltip ----
+    const seekTooltip = document.getElementById('seek-tooltip');
+    seekBar.addEventListener('mousemove', e => {
+        if (!video.duration || video.duration === Infinity) return;
+        const rect = seekBar.getBoundingClientRect();
+        let pos = e.clientX - rect.left;
+        pos = Math.max(0, Math.min(pos, rect.width));
+        const hoverTime = video.duration * (pos / rect.width);
+        seekTooltip.textContent = formatTime(hoverTime);
+        // Clamp so tooltip never overflows the bar edges
+        const tipHalfW = seekTooltip.offsetWidth / 2;
+        const clampedLeft = Math.max(tipHalfW, Math.min(pos, rect.width - tipHalfW));
+        seekTooltip.style.left = `${clampedLeft}px`;
+        seekTooltip.classList.add('visible');
+    });
+    seekBar.addEventListener('mouseleave', () => {
+        seekTooltip.classList.remove('visible');
+    });
+
+    volumeControlWrapper.addEventListener('mouseenter', () => volumeSliderContainer.classList.remove('hidden'));
+    volumeControlWrapper.addEventListener('mouseleave', () => setTimeout(() => { if (!isVolumeAdjusting) volumeSliderContainer.classList.add('hidden'); }, 300));
+
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+    video.addEventListener('webkitbeginfullscreen', updateFullscreenIcon);
+    video.addEventListener('webkitendfullscreen', updateFullscreenIcon);
+
+    video.addEventListener('timeupdate', () => { updateProgress(); postTimeUpdateToParent(); checkIntrodbSegments(); });
+    video.addEventListener('progress', updateBufferProgress);
+    video.addEventListener('loadedmetadata', () => {
+        updateProgress(); updateBufferProgress();
+        remainingTimeDisplay.textContent = `-${formatTime(video.duration)}`;
+        drawSeekbarMarkers(); // redraw once duration is known
+    });
+    video.addEventListener('volumechange', updateVolumeSlider);
+    video.addEventListener('waiting', showLoader);
+    video.addEventListener('playing', hideLoader);
+    video.addEventListener('canplay', hideLoader);
+    video.addEventListener('pause', () => {
+        showControls();
+        updateBottomPlayPauseIcon(true);
+        updateCenterPlayPauseIcon(true);
+        clearTimeout(inactivityTimer);
+    });
+    video.addEventListener('play', () => {
+        updateBottomPlayPauseIcon(false);
+        updateCenterPlayPauseIcon(false);
+        resetInactivityTimer();
+    });
+    video.addEventListener('ended', () => {
+        showControls();
+        updateBottomPlayPauseIcon(true);
+        updateCenterPlayPauseIcon(true);
+        hideLoader();
+    });
+
+    // Next Episode button — only shown on TV routes, re-evaluated on each episode change
+    const nextEpisodeButton = document.getElementById('next-episode-button');
+    nextEpisodeButton.addEventListener('click', () => {
+        const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+        if (!tvMatch) return;
+        playEpisode(tvMatch[1], Number(tvMatch[2]), Number(tvMatch[3]) + 1);
+    });
+
+    updateNextEpisodeButtonVisibility();
+}
+
+/* -------------------------------------------------------------------------
+   NEXT EPISODE BUTTON VISIBILITY  –  called on each episode change
+   Hides the button if the next episode key is absent from the season JSON.
+   ------------------------------------------------------------------------- */
+async function updateNextEpisodeButtonVisibility() {
+    const nextEpisodeButton = document.getElementById('next-episode-button');
+    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+
+    if (!tvMatch) {
+        nextEpisodeButton.classList.add('hidden');
+        return;
+    }
+
+    // Optimistically hide while we check, so the button never briefly shows wrong
+    nextEpisodeButton.classList.add('hidden');
+
+    const seriesId     = tvMatch[1];
+    const seasonNumber = Number(tvMatch[2]);
+    const nextEpisode  = Number(tvMatch[3]) + 1;
+
+    try {
+        const githubJsonUrl =
+            `https://raw.githubusercontent.com/Watchout2025/api/refs/heads/main/hls/tv/${seriesId}/S${seasonNumber}.json`;
+        const res  = await fetch(githubJsonUrl, { cache: 'no-store' });
+        if (!res.ok) return; // Can't confirm next episode — keep hidden
+
+        const data = await res.json();
+        if (data[nextEpisode]) {
+            nextEpisodeButton.classList.remove('hidden');
+        }
+        // Otherwise stays hidden — next episode doesn't exist in JSON
+    } catch (e) {
+        // Network/parse error — keep button hidden to avoid dead clicks
+        console.warn('updateNextEpisodeButtonVisibility failed:', e.message);
+    }
+}
+
+/* -------------------------------------------------------------------------
+   PER-PLAYBACK SETUP  –  called each time a new stream starts
+   ------------------------------------------------------------------------- */
+function setupInactivityDetection() {
+    if (!isHlsJsMode && video.audioTracks) video.audioTracks.addEventListener('change', renderTracksMenu);
+
+    lastKnownVolume = video.volume > 0 ? video.volume : 0.5;
+    updateProgress(); updateBufferProgress(); updateVolumeSlider(); updateFullscreenIcon();
+    updateNextEpisodeButtonVisibility();
+
+    if (video.paused || video.ended) {
+        showControls();
+        updateBottomPlayPauseIcon(true);
+        updateCenterPlayPauseIcon(true);
+    } else {
+        updateBottomPlayPauseIcon(false);
+        updateCenterPlayPauseIcon(false);
+        resetInactivityTimer();
+    }
+}
+
+/* -------------------------------------------------------------------------
+   VOLUME SLIDER
+   ------------------------------------------------------------------------- */
+function calculateNewVolume(clientY) {
+    const rect = volumeSliderTrack.getBoundingClientRect();
+    let dist = rect.bottom - clientY;
+    dist = Math.max(0, Math.min(dist, rect.height));
+    return dist / rect.height;
+}
+function handleVolumeAdjust(e) {
+    e.preventDefault();
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const vol = calculateNewVolume(y);
+    video.volume = vol;
+    if (vol > 0) { video.muted = false; lastKnownVolume = vol; }
+    else video.muted = true;
+    updateVolumeSlider();
+}
+function startVolumeAdjusting(e) {
+    isVolumeAdjusting = true;
+    e.preventDefault();
+    window.addEventListener('mousemove', handleVolumeAdjust);
+    window.addEventListener('mouseup', endVolumeAdjusting);
+    window.addEventListener('touchmove', handleVolumeAdjust);
+    window.addEventListener('touchend', endVolumeAdjusting);
+    handleVolumeAdjust(e);
+}
+function endVolumeAdjusting() {
+    if (!isVolumeAdjusting) return;
+    isVolumeAdjusting = false;
+    window.removeEventListener('mousemove', handleVolumeAdjust);
+    window.removeEventListener('mouseup', endVolumeAdjusting);
+    window.removeEventListener('touchmove', handleVolumeAdjust);
+    window.removeEventListener('touchend', endVolumeAdjusting);
+    resetInactivityTimer();
+}
+volumeSliderTrack.addEventListener('mousedown', startVolumeAdjusting);
+volumeSliderTrack.addEventListener('touchstart', startVolumeAdjusting, {passive:true});
+
+/* -------------------------------------------------------------------------
+   KEYBOARD SHORTCUTS
+   ------------------------------------------------------------------------- */
+function handleKeyboardShortcuts(e) {
+    if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+
+    const prevent = ['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+    if (prevent.includes(e.code)) e.preventDefault();
+
+    switch (e.code) {
+        case 'Space':
+        case 'KeyK': toggleVideoPlayPause(); break;
+        case 'ArrowLeft': video.currentTime = Math.max(0, video.currentTime-5); resetInactivityTimer(); break;
+        case 'ArrowRight': video.currentTime = Math.min(video.duration, video.currentTime+5); resetInactivityTimer(); break;
+        case 'KeyJ': handleSkipBackward(); break;
+        case 'KeyL': handleSkipForward(); break;
+        case 'ArrowUp':
+            e.preventDefault();
+            video.volume = Math.min(1, video.volume+0.05);
+            video.muted = false; lastKnownVolume = video.volume;
+            updateVolumeSlider(); resetInactivityTimer(); break;
+        case 'ArrowDown':
+            e.preventDefault();
+            video.volume = Math.max(0, video.volume-0.05);
+            if (video.volume===0) video.muted = true;
+            updateVolumeSlider(); resetInactivityTimer(); break;
+        case 'KeyM': toggleMute(); break;
+        case 'KeyF': toggleFullscreen(); break;
+        case 'KeyC':
+            if (isHlsJsMode && hlsInstance) {
+                const cur = hlsInstance.subtitleTrack;
+                const nextIdx = cur === -1 ? 0 : -1;
+                hlsInstance.subtitleTrack = nextIdx;
+                // Sync native textTracks so cues actually render
+                const subs = Array.from(video.textTracks).filter(t=>t.kind==='subtitles'||t.kind==='captions');
+                subs.forEach((t,i) => { t.mode = (nextIdx >= 0 && i === nextIdx) ? 'showing' : 'disabled'; });
+            } else if (video.textTracks) {
+                const subs = Array.from(video.textTracks).filter(t=>t.kind==='subtitles'||t.kind==='captions');
+                const showing = subs.some(t=>t.mode==='showing');
+                subs.forEach((t,i)=> t.mode = showing ? 'disabled' : (i===0?'showing':'disabled'));
+            }
+            renderTracksMenu(); resetInactivityTimer(); break;
+        default:
+            if (e.code.startsWith('Digit')) {
+                const d = parseInt(e.code.replace('Digit',''));
+                video.currentTime = (video.duration * d) / 10;
+                resetInactivityTimer();
+            } else if (e.code === 'Home') { video.currentTime = 0; resetInactivityTimer(); }
+            else if (e.code === 'End') { video.currentTime = video.duration; resetInactivityTimer(); }
+            else if (e.code === 'Comma' && video.paused) { video.currentTime = Math.max(0, video.currentTime-1/30); resetInactivityTimer(); }
+            else if (e.code === 'Period' && video.paused) { video.currentTime = Math.min(video.duration, video.currentTime+1/30); resetInactivityTimer(); }
+    }
+}
+document.addEventListener('keydown', handleKeyboardShortcuts);
+
+/* -------------------------------------------------------------------------
+   HLS / DIRECT VIDEO INITIALISATION
+   ------------------------------------------------------------------------- */
+function isDirectVideoUrl(url) {
+    try {
+        const path = new URL(url).pathname.toLowerCase();
+        return /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v)(\?|$)/.test(path);
+    } catch (e) {
+        return /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v)(\?|$)/.test(url.toLowerCase());
+    }
+}
+
+function initHlsPlayer(url) {
+    // Flush progress for the current episode before switching.
+    // Must happen before resolvedUrl / videoStorageKey are overwritten.
+    saveVideoProgress();
+    if (saveProgressInterval) {
+        clearInterval(saveProgressInterval);
+        saveProgressInterval = null;
+    }
+
+    // Tear down any existing HLS instance cleanly before starting a new one.
+    // This prevents the old instance from firing fatal error events mid-swap.
+    stopProgressSaving();
+    hasRestoredPosition = false;
+    if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+    }
+    // Remove injected subtitle tracks from previous episode
+    Array.from(video.querySelectorAll('track[data-github], track[data-wyzie]')).forEach(t => t.remove());
+    errorMessageDiv.classList.add('hidden');
+
+    // Reset per-episode progress state so the new episode starts fresh.
+    hasRestoredPosition = false;
+
+    resolvedUrl     = url;
+    videoStorageKey = generateStorageKey(url);
+
+    /* ---- Direct video file (MP4, WebM, etc.) ---- */
+    if (isDirectVideoUrl(url)) {
+        isHlsJsMode = false;
+        showLoader();
+        video.src = url;
+        video.addEventListener('loadedmetadata', () => {
+            renderTracksMenu(); hideLoader(); setupInactivityDetection();
+            restoreVideoProgress(); startProgressSaving();
+            video.play().catch(() => {});
+        }, {once:true});
+        video.addEventListener('error', () => {
+            if (video.currentTime > 0 || video.readyState >= 2) return;
+            displayError('Failed to load video: ' + (video.error ? video.error.message : 'unknown error'));
+            hideLoader();
+        }, {once:true});
+        return;
+    }
+
+    /* ---- HLS stream (.m3u8) ---- */
+    if (Hls.isSupported()) {
+        isHlsJsMode = true;
+        showLoader();
+        const h = new Hls({
+            renderTextTracksNatively: true,
+            subtitleDisplay: true,
+        });
+        hlsInstance = h;
+
+        h.on(Hls.Events.MEDIA_ATTACHED, () => h.loadSource(url));
+        h.on(Hls.Events.MANIFEST_PARSED, () => { renderTracksMenu(); renderQualityList(); });
+        h.on(Hls.Events.AUDIO_TRACK_SWITCHED, renderTracksMenu);
+        h.on(Hls.Events.SUBTITLE_TRACK_SWITCHED, renderTracksMenu);
+        h.on(Hls.Events.LEVEL_SWITCHED, () => { if (!speedQualityMenu.classList.contains('hidden')) renderQualityList(); });
+        h.on(Hls.Events.ERROR, (ev, data) => {
+            if (data.fatal) {
+                displayError('Fatal HLS error');
+                h.destroy();
+                hideLoader();
+            }
+        });
+
+        /* Fix HLS cue position — move from browser-default bottom to line:85%
+           (same position used by GitHub/Wyzie subtitles via srtToVtt)            */
+        function fixHlsCueLine(cue) {
+            if (!(cue instanceof VTTCue)) return;
+            cue.line        = 85;
+            cue.snapToLines = false;
+            cue.position    = 50;
+            cue.align       = 'center';
+        }
+        function patchTrackCues(track) {
+            if (track.cues) Array.from(track.cues).forEach(fixHlsCueLine);
+            track.addEventListener('cuechange', () => {
+                if (track.cues) Array.from(track.cues).forEach(fixHlsCueLine);
+            });
+        }
+        video.textTracks.addEventListener('addtrack', e => {
+            const t = e.track;
+            if (t.kind === 'subtitles' || t.kind === 'captions') {
+                // Only patch HLS-native tracks, not our injected GitHub/Wyzie ones
+                const el = Array.from(video.querySelectorAll('track'))
+                    .find(el => el.label === t.label && el.srclang === t.language);
+                if (!el || (!el.hasAttribute('data-github') && !el.hasAttribute('data-wyzie'))) {
+                    patchTrackCues(t);
+                }
+            }
+        });
+
+        h.attachMedia(video);
+
+        video.addEventListener('loadedmetadata', () => restoreVideoProgress(), {once:true});
+        video.addEventListener('canplay', () => { hideLoader(); setupInactivityDetection(); startProgressSaving(); video.play().catch(() => {}); }, {once:true});
+    }
+    else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        isHlsJsMode = false;
+        showLoader();
+        video.src = url;
+        video.addEventListener('loadedmetadata', () => {
+            renderTracksMenu(); hideLoader(); setupInactivityDetection();
+            restoreVideoProgress(); startProgressSaving();
+            video.play().catch(() => {});
+        }, {once:true});
+        video.addEventListener('error', () => {
+            if (video.currentTime > 0 && !video.paused) return;
+            displayError('Failed to load stream: ' + (video.error ? video.error.message : 'unknown error'));
+            hideLoader();
+        }, {once:true});
+    }
+    else {
+        displayError('Browser does not support HLS');
+        hideLoader();
+    }
+}
+
+/* -------------------------------------------------------------------------
+   PLAY MOVIE  –  /movie/{tmdbId}
+   ------------------------------------------------------------------------- */
+async function playMovie(movieId) {
+    _revokeAllSubtitleBlobs();
+    showLoader();
+
+    const githubUrl =
+        `https://raw.githubusercontent.com/Watchout2025/api/refs/heads/main/hls/movie/${movieId}`;
+
+    try {
+        const res = await fetch(githubUrl, { cache: 'no-store' });
+        if (!res.ok) {
+            displayError(`Could not load movie data (HTTP ${res.status}).`);
+            hideLoader();
+            return;
+        }
+
+        const cleanUrl = (await res.text()).trim();
+
+        if (cleanUrl && (cleanUrl.includes('.m3u8') || cleanUrl.includes('http'))) {
+            initHlsPlayer(cleanUrl);
+            loadSubtitlesFromGithub('movie', movieId);
+            loadSubtitlesFromWyzie('movie', movieId);
+            fetchAndSetTitle('movie', movieId);
+            loadIntrodbTimestamps('movie', movieId);
+        } else {
+            displayError(`Invalid stream URL received for movie ${movieId}.`);
+            hideLoader();
+        }
+    } catch (err) {
+        displayError(`Failed to fetch movie data: ${err.message}`);
+        hideLoader();
+    }
+}
+
+/* -------------------------------------------------------------------------
+   PLAY EPISODE  –  /tv/{tmdbId}/S{season}/E{episode}
+   ------------------------------------------------------------------------- */
+async function playEpisode(seriesId, seasonNumber, episodeNumber) {
+    _revokeAllSubtitleBlobs();
+    const expectedPath = `/tv/${seriesId}/S${seasonNumber}/E${episodeNumber}`;
+    if (window.location.pathname !== expectedPath) {
+        history.replaceState(null, '', expectedPath);
+    }
+
+    showLoader();
+
+    const githubJsonUrl =
+        `https://raw.githubusercontent.com/Watchout2025/api/refs/heads/main/hls/tv/${seriesId}/S${seasonNumber}.json`;
+
+    try {
+        const res = await fetch(githubJsonUrl, { cache: 'no-store' });
+        if (!res.ok) {
+            displayError(`Could not load season data (HTTP ${res.status}).`);
+            hideLoader();
+            return;
+        }
+
+        const data   = await res.json();
+        const fileId = data[episodeNumber];
+
+        if (fileId) {
+            initHlsPlayer(fileId);
+            loadSubtitlesFromGithub('tv', seriesId, seasonNumber, episodeNumber);
+            loadSubtitlesFromWyzie('tv', seriesId, seasonNumber, episodeNumber);
+            fetchAndSetTitle('tv', seriesId, seasonNumber, episodeNumber);
+            loadIntrodbTimestamps('tv', seriesId, seasonNumber, episodeNumber);
+        } else {
+            displayError(`Episode ${episodeNumber} not found in season data.`);
+            hideLoader();
+        }
+    } catch (err) {
+        displayError(`Failed to fetch episode data: ${err.message}`);
+        hideLoader();
+    }
+}
+
+/* -------------------------------------------------------------------------
+   START  –  Route dispatcher
+             Movie:    /movie/{tmdbId}
+             TV:       /tv/{tmdbId}/S{season}/E{episode}
+             Fallback: ?url=  or hardcoded default
+   ------------------------------------------------------------------------- */
+async function resolveAndPlay() {
+    const path = window.location.pathname;
+
+    const movieMatch = path.match(/\/movie\/(\d+)/i);
+    if (movieMatch) {
+        return playMovie(movieMatch[1]);
+    }
+
+    const tvMatch = path.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    if (tvMatch) {
+        return playEpisode(tvMatch[1], tvMatch[2], tvMatch[3]);
+    }
+
+    /* Fallback: ?url= query param or hardcoded default */
+    const hlsUrl =
+        urlParams.get('url') ||
+        'https://vidmmo.com/hls/ZDBtrL1WMPQipj3EubEdG6tAKeYJ0Nt3/master.m3u8';
+
+    initHlsPlayer(hlsUrl);
+}
+
+/* -------------------------------------------------------------------------
+   TMDB TITLE FETCHING
+   ------------------------------------------------------------------------- */
+const TMDB_PROXY = 'https://db.videasy.to/3';
+
+async function fetchAndSetTitle(type, id, season, episode) {
+    try {
+        if (type === 'movie') {
+            const res = await fetch(`${TMDB_PROXY}/movie/${id}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById('title-main-text').textContent = data.title || '';
+            document.getElementById('mobile-title-main').textContent = data.title || '';
+            document.title = data.title || document.title;
+        } else if (type === 'tv') {
+            const [seriesRes, epRes] = await Promise.all([
+                fetch(`${TMDB_PROXY}/tv/${id}`),
+                fetch(`${TMDB_PROXY}/tv/${id}/season/${season}/episode/${episode}`)
+            ]);
+            const series = seriesRes.ok ? await seriesRes.json() : {};
+            const ep     = epRes.ok     ? await epRes.json()     : {};
+            const seriesName = series.name || '';
+            const epName     = ep.name    || '';
+            const label      = `S${season}:E${episode}`;
+            const fullTitle  = [seriesName, label, epName].filter(Boolean).join(' ');
+            const mobileTitle = `${label} "${epName || seriesName}"`;
+            document.getElementById('title-main-text').textContent = fullTitle;
+            document.getElementById('mobile-title-main').textContent = mobileTitle;
+            document.title = fullTitle || document.title;
+        }
+    } catch (e) {
+        /* Silently ignore — title is non-critical */
+        console.warn('fetchAndSetTitle failed:', e.message);
+    }
+}
+
+/* -------------------------------------------------------------------------
+   SUBTITLES FROM GITHUB subtitles.json
+   ------------------------------------------------------------------------- */
+const GITHUB_RAW = 'https://raw.githubusercontent.com/Watchout2025/api/refs/heads/main';
+
+const LANG_LABELS = {
+    eng:'English', hin:'Hindi', ara:'Arabic', fra:'French', spa:'Spanish',
+    por:'Portuguese', rus:'Russian', zho:'Chinese', jpn:'Japanese', kor:'Korean',
+    ger:'German', ita:'Italian', tam:'Tamil', tel:'Telugu', mal:'Malayalam',
+    ben:'Bengali', mar:'Marathi', urd:'Urdu', pol:'Polish', tur:'Turkish',
+    nld:'Dutch', swe:'Swedish', nor:'Norwegian', dan:'Danish', fin:'Finnish',
+    ind:'Indonesian', tha:'Thai', vie:'Vietnamese', ces:'Czech', hun:'Hungarian',
+    ron:'Romanian', bul:'Bulgarian', hrv:'Croatian', srp:'Serbian', slk:'Slovak',
+    ukr:'Ukrainian', heb:'Hebrew', fas:'Persian', msa:'Malay',
+};
+
+function langLabel(code) {
+    return LANG_LABELS[code] || code.toUpperCase();
+}
+
+function srtToVtt(srt) {
+    // Convert SRT subtitle format to WebVTT format (required by HTML5 <track>)
+    // line:85% pushes cues above the controls bar, align:center keeps them centred
+    let vtt = 'WEBVTT\n\n';
+    const body = srt
+        .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+        .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2')
+        .trim();
+    // Inject position cue settings on every timestamp line
+    vtt += body.replace(
+        /(\d{2}:\d{2}:\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}\.\d{3})/g,
+        '$1 line:85% position:50% align:center'
+    );
+    return vtt;
+}
+
+// Track blob URLs so we can revoke them when reloading
+const _subtitleBlobUrls = [];
+
+function _revokeAllSubtitleBlobs() {
+    while (_subtitleBlobUrls.length) {
+        URL.revokeObjectURL(_subtitleBlobUrls.pop());
+    }
+}
+
+async function loadSubtitlesFromGithub(type, id, season, episode) {
+    // 2-letter codes derived from languageCodeMap
+    const twoLetterCodes = Object.entries(languageCodeMap)
+        .filter(([code]) => code.length === 2)
+        .map(([code]) => code);
+
+    // Shared inject helper
+    const injectTracks = (validTracks) => {
+        const allBefore = Array.from(video.textTracks)
+            .filter(t => t.kind === 'subtitles' || t.kind === 'captions');
+        const showingBefore = allBefore.findIndex(t => t.mode === 'showing');
+
+        Array.from(video.querySelectorAll('track[data-github]')).forEach(t => t.remove());
+
+        validTracks.forEach(({ label, blobUrl, srclang }) => {
+            const track = document.createElement('track');
+            track.kind    = 'subtitles';
+            track.label   = label;
+            track.srclang = srclang;
+            track.src     = blobUrl;
+            track.setAttribute('data-github', '1');
+            track.default = false;
+            video.appendChild(track);
+        });
+
+        if (showingBefore !== -1) {
+            const allAfter = Array.from(video.textTracks)
+                .filter(t => t.kind === 'subtitles' || t.kind === 'captions');
+            allAfter.forEach((t, i) => {
+                t.mode = (i === showingBefore) ? 'showing' : 'disabled';
+            });
+        }
+
+        renderTracksMenu();
+    };
+
+    const scheduleInject = (validTracks) => {
+        if (!validTracks.length) return;
+        if (video.readyState >= 1) {
+            injectTracks(validTracks);
+        } else {
+            video.addEventListener('loadedmetadata', () => injectTracks(validTracks), { once: true });
+        }
+    };
+
+    // ── TV: try Cloudinary base URL first ──────────────────────────────────
+    if (type === 'tv') {
+        try {
+            const seasonEndpoint = `${GITHUB_RAW}/sub/tv/${id}/${season}/endpoint`;
+            const baseRes = await fetch(seasonEndpoint, { cache: 'no-store' });
+
+            if (baseRes.ok) {
+                const cloudinaryBase = (await baseRes.text()).trim();
+
+                // Fetch all language VTTs in parallel: {base}{episode}.{langCode}.vtt
+                const trackData = await Promise.all(twoLetterCodes.map(async (code) => {
+                    try {
+                        const url = `${cloudinaryBase}${episode}.${code}.vtt`;
+                        const res = await fetch(url, { cache: 'no-store' });
+                        if (!res.ok) return null;
+                        const vttText = await res.text();
+                        const blob = new Blob([vttText], { type: 'text/vtt;charset=utf-8' });
+                        const blobUrl = URL.createObjectURL(blob);
+                        _subtitleBlobUrls.push(blobUrl);
+                        const label = languageCodeMap[code] || code.toUpperCase();
+                        return { label, blobUrl, srclang: code };
+                    } catch (err) {
+                        return null;
+                    }
+                }));
+
+                const validTracks = trackData.filter(Boolean);
+                if (validTracks.length) {
+                    scheduleInject(validTracks);
+                    return; // Cloudinary succeeded — skip subtitles.json
+                }
+            }
+        } catch (e) {
+            console.warn('Cloudinary subtitle fetch failed, falling back to subtitles.json:', e.message);
+        }
+    }
+
+    // ── Fallback: subtitles.json (movies + TV fallback) ────────────────────
+    const jsonPath = type === 'movie'
+        ? `${GITHUB_RAW}/sub/movie/${id}/subtitles.json`
+        : `${GITHUB_RAW}/sub/tv/${id}/${season}/${episode}/subtitles.json`;
+
+    try {
+        const res = await fetch(jsonPath, { cache: 'no-store' });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const subs = data.subtitles || {};
+        const langs = Object.keys(subs);
+        if (!langs.length) return;
+
+        const trackData = await Promise.all(langs.map(async (lang) => {
+            try {
+                const srtRes = await fetch(subs[lang], { cache: 'no-store' });
+                if (!srtRes.ok) return null;
+                const srtText = await srtRes.text();
+                const vttText = srtToVtt(srtText);
+                const blob = new Blob([vttText], { type: 'text/vtt;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                _subtitleBlobUrls.push(blobUrl);
+                return { label: langLabel(lang), blobUrl, srclang: lang };
+            } catch (err) {
+                console.warn(`Failed to load subtitle for ${lang}:`, err.message);
+                return null;
+            }
+        }));
+
+        scheduleInject(trackData.filter(Boolean));
+
+    } catch (e) {
+        console.warn('Could not load subtitles.json:', e.message);
+    }
+}
+
+/* -------------------------------------------------------------------------
+   SUBTITLES FROM WYZIE (OpenSubtitles proxy)
+   Priority order in menu: HLS → GitHub → Wyzie
+
+   LAZY LOADING: Only the Wyzie search API is called on page load to get
+   the track list. Actual SRT files are only fetched when the user clicks
+   a Wyzie subtitle. This avoids downloading 10–20 subtitle files upfront
+   and makes tracks appear in the menu immediately.
+   ------------------------------------------------------------------------- */
+const WYZIE_API    = 'https://subs.videasy.to/search';
+const WYZIE_KEY    = 'wyzie-ea127adc7693d78810f9cf157f267ea0';
+
+async function fetchAndActivateWyzieTrack(trackEl) {
+    const lazyUrl = trackEl.getAttribute('data-lazy-url');
+    if (!lazyUrl) return true; // already loaded
+
+    try {
+        const srtRes = await fetch(lazyUrl, { cache: 'no-store' });
+        if (!srtRes.ok) throw new Error(`HTTP ${srtRes.status}`);
+        const srtText = await srtRes.text();
+        const vttText = srtToVtt(srtText);
+        const blob    = new Blob([vttText], { type: 'text/vtt;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        _subtitleBlobUrls.push(blobUrl);
+        trackEl.src = blobUrl;
+        trackEl.removeAttribute('data-lazy-url');
+        return true;
+    } catch (err) {
+        console.warn('Wyzie lazy fetch failed:', err.message);
+        return false;
+    }
+}
+
+let _wyzieLoading = false;
+
+// Fetch IMDb ID from TMDB external_ids endpoint (needed by Wyzie/OpenSubtitles)
+async function fetchImdbId(type, tmdbId) {
+    try {
+        const endpoint = type === 'movie'
+            ? `${TMDB_PROXY}/movie/${tmdbId}/external_ids`
+            : `${TMDB_PROXY}/tv/${tmdbId}/external_ids`;
+        const res = await fetch(endpoint, { cache: 'force-cache' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.imdb_id || null;
+    } catch (e) {
+        console.warn('fetchImdbId failed:', e.message);
+        return null;
+    }
+}
+
+async function loadSubtitlesFromWyzie(type, id, season, episode) {
+    _wyzieLoading = true;
+    renderTracksMenu(); // immediately show loading state in menu if already open
+    try {
+        // Wyzie/OpenSubtitles requires an IMDb ID, not a TMDB ID — resolve it first
+        const imdbId = await fetchImdbId(type, id);
+        if (!imdbId) { _wyzieLoading = false; renderTracksMenu(); return; }
+
+        // Build query URL — metadata only, SRT files fetched lazily on selection
+        let apiUrl = `${WYZIE_API}?id=${imdbId}`;
+        if (type === 'tv') {
+            apiUrl += `&season=${season}&episode=${episode}`;
+        }
+
+        const res = await fetch(apiUrl, { cache: 'no-store' });
+        if (!res.ok) { _wyzieLoading = false; renderTracksMenu(); return; }
+
+        const tracks = await res.json();
+        if (!Array.isArray(tracks) || !tracks.length) { _wyzieLoading = false; renderTracksMenu(); return; }
+
+        // Inject placeholder <track> elements immediately — no SRT fetch yet.
+        // The actual SRT is downloaded only when the user selects a track.
+        const inject = () => {
+            // Remove previously injected Wyzie tracks before re-injecting
+            Array.from(video.querySelectorAll('track[data-wyzie]')).forEach(t => t.remove());
+
+            tracks.forEach((track) => {
+                const el = document.createElement('track');
+                el.kind    = 'subtitles';
+                el.label   = (track.display || track.language) + (track.isHearingImpaired ? ' [CC]' : '');
+                el.srclang = track.language;
+                // Do NOT set el.src — store the SRT URL for lazy loading on selection
+                el.setAttribute('data-wyzie', '1');
+                el.setAttribute('data-lazy-url', track.url);
+                el.default = false;
+                video.appendChild(el);
+            });
+
+            // Tracks have no src so the browser won't auto-activate them,
+            // but defensively mark any that slipped through as disabled.
+            Array.from(video.textTracks)
+                .filter(t => t.kind === 'subtitles' || t.kind === 'captions')
+                .forEach(t => {
+                    const el = Array.from(video.querySelectorAll('track[data-wyzie]'))
+                        .find(el => el.label === t.label && el.srclang === t.language);
+                    if (el && el.hasAttribute('data-lazy-url')) t.mode = 'disabled';
+                });
+
+            // Re-render menu so Wyzie tracks appear immediately after GitHub tracks
+            _wyzieLoading = false;
+            renderTracksMenu();
+        };
+
+        if (video.readyState >= 1) {
+            inject();
+        } else {
+            video.addEventListener('loadedmetadata', inject, { once: true });
+        }
+
+    } catch (e) {
+        _wyzieLoading = false;
+        renderTracksMenu();
+        console.warn('Wyzie subtitle load failed:', e.message);
+    }
+}
+
+/* =========================================================================
+   INTRODB — TIMESTAMPS  (skip intro / recap / credits / preview)
+   =========================================================================
+
+   Flow:
+     1. loadIntrodbTimestamps() is called from playMovie() / playEpisode()
+        once we know the TMDB ID (and season/episode for TV).
+     2. It waits for video duration to be available, then fires the API
+        request with duration_ms.
+     3. On success, _introdbData is stored and seekbar markers are drawn.
+     4. On every timeupdate the player checks whether currentTime falls
+        inside any segment and shows/hides the skip prompt accordingly.
+   ========================================================================= */
+
+/**
+ * Fetch timestamps for the current media item and initialise the skip UI.
+ * @param {'movie'|'tv'} type
+ * @param {string|number} tmdbId
+ * @param {number} [season]
+ * @param {number} [episode]
+ */
+async function loadIntrodbTimestamps(type, tmdbId, season, episode) {
+    // Reset any previous state
+    _introdbData        = null;
+    _activeSkipSegment  = null;
+    hideSkipPrompt();
+    clearSeekbarMarkers();
+
+    // We need the duration — wait until it's available
+    const getDuration = () => new Promise(resolve => {
+        if (video.duration && isFinite(video.duration)) {
+            resolve(video.duration);
+        } else {
+            const handler = () => {
+                if (video.duration && isFinite(video.duration)) {
+                    video.removeEventListener('loadedmetadata', handler);
+                    video.removeEventListener('durationchange', handler);
+                    resolve(video.duration);
+                }
+            };
+            video.addEventListener('loadedmetadata', handler);
+            video.addEventListener('durationchange', handler);
+        }
+    });
+
+    let duration;
+    try {
+        // Timeout after 10 s — don't block indefinitely
+        duration = await Promise.race([
+            getDuration(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+        ]);
+    } catch (e) {
+        console.warn('[IntroDB] Could not get duration:', e.message);
+        return;
+    }
+
+    const durationMs = Math.round(duration * 1000);
+
+    // Build the request URL
+    const params = new URLSearchParams({ tmdb_id: tmdbId, duration_ms: durationMs });
+    if (type === 'tv' && season != null && episode != null) {
+        params.set('season', season);
+        params.set('episode', episode);
+    }
+
+    try {
+        const res = await fetch(`${INTRODB_API}?${params.toString()}`, { cache: 'no-store' });
+        if (!res.ok) {
+            console.warn(`[IntroDB] API returned HTTP ${res.status}`);
+            return;
+        }
+        const data = await res.json();
+        _introdbData = data;
+        console.info('[IntroDB] Timestamps loaded:', data);
+        drawSeekbarMarkers();
+    } catch (e) {
+        console.warn('[IntroDB] Fetch failed:', e.message);
+    }
+}
+
+/* ---- Seekbar marker rendering ---- */
+
+const MARKER_TYPES = ['intro', 'recap', 'credits', 'preview'];
+
+function clearSeekbarMarkers() {
+    seekBar.querySelectorAll('.seekbar-marker').forEach(el => el.remove());
+}
+
+function drawSeekbarMarkers() {
+    clearSeekbarMarkers();
+    if (!_introdbData || !video.duration || !isFinite(video.duration)) return;
+
+    const duration = video.duration * 1000; // ms
+
+    MARKER_TYPES.forEach(type => {
+        const segments = _introdbData[type];
+        if (!Array.isArray(segments)) return;
+
+        segments.forEach(seg => {
+            const startMs = seg.start_ms ?? 0;
+            const endMs   = seg.end_ms   ?? duration;
+            if (startMs >= endMs) return;
+
+            const leftPct  = (startMs / duration) * 100;
+            const widthPct = ((endMs - startMs) / duration) * 100;
+
+            const marker = document.createElement('div');
+            marker.className = `seekbar-marker ${type}`;
+            marker.style.left  = `${leftPct}%`;
+            marker.style.width = `${widthPct}%`;
+            marker.title = type.charAt(0).toUpperCase() + type.slice(1);
+            // Insert behind progress/buffer layers
+            seekBar.insertBefore(marker, seekBar.firstChild);
+        });
+    });
+}
+
+/* ---- Skip prompt show/hide ---- */
+
+const skipPromptEl  = document.getElementById('skip-prompt');
+const skipPromptBtn = document.getElementById('skip-prompt-btn');
+
+const SKIP_LABELS = {
+    intro:   'Skip Intro',
+    recap:   'Skip Recap',
+    credits: 'Skip Credits',
+    preview: 'Skip Preview',
+};
+
+function showSkipPrompt(type, endMs) {
+    _activeSkipSegment = { type, end_ms: endMs };
+    skipPromptBtn.textContent = SKIP_LABELS[type] || 'Skip';
+    skipPromptEl.classList.add('visible');
+}
+
+function hideSkipPrompt() {
+    _activeSkipSegment = null;
+    skipPromptEl.classList.remove('visible');
+}
+
+/** Called by the onclick on the skip button */
+function skipPromptAction() {
+    if (!_activeSkipSegment) return;
+    const endSec = _activeSkipSegment.end_ms / 1000;
+    // Clamp to valid range
+    video.currentTime = Math.min(endSec, video.duration - 0.1);
+    hideSkipPrompt();
+    resetInactivityTimer();
+}
+
+/**
+ * Called on every timeupdate. Checks whether currentTime sits inside
+ * any known segment and updates the skip prompt accordingly.
+ * Priority: intro > recap > credits > preview (first match wins).
+ */
+function checkIntrodbSegments() {
+    if (!_introdbData || !video.duration || video.paused) {
+        // Hide if paused (Netflix behaviour: prompt only while playing)
+        if (video.paused && _activeSkipSegment) hideSkipPrompt();
+        return;
+    }
+
+    const nowMs = video.currentTime * 1000;
+    const totalMs = video.duration * 1000;
+
+    for (const type of MARKER_TYPES) {
+        const segments = _introdbData[type];
+        if (!Array.isArray(segments)) continue;
+
+        for (const seg of segments) {
+            const startMs = seg.start_ms ?? 0;
+            const endMs   = seg.end_ms   ?? totalMs;
+            if (nowMs >= startMs && nowMs < endMs) {
+                // We're inside this segment
+                if (!_activeSkipSegment || _activeSkipSegment.type !== type) {
+                    showSkipPrompt(type, endMs);
+                }
+                return;
+            }
+        }
+    }
+
+    // Not inside any segment
+    if (_activeSkipSegment) hideSkipPrompt();
+}
+
+/* =========================================================================
+   END INTRODB
+   ========================================================================= */
+
+window.onload = () => { setupUIControls(); resolveAndPlay(); };
+
+/* -------------------------------------------------------------------------
+   REPORT ISSUE MODAL
+   ------------------------------------------------------------------------- */
+const reportModal = document.getElementById('reportModal');
+const issueTypeSelect = document.getElementById('issueType');
+const submitBtn = document.getElementById('submitBtn');
+
+document.getElementById('report-button').addEventListener('click', openReportModal);
+
+issueTypeSelect.addEventListener('change', () => {
+  submitBtn.disabled = issueTypeSelect.value === '';
+});
+
+function openReportModal() {
+  reportModal.classList.add('active');
+}
+
+function closeReportModal() {
+  reportModal.classList.remove('active');
+}
+
+// Close when clicking backdrop
+reportModal.addEventListener('click', (e) => {
+  if (e.target === reportModal) closeReportModal();
+});
+
+
+
+
+async function submitIssue() {
+  const type = issueTypeSelect.value;
+  const desc = document.getElementById('issueDesc').value;
+  submitBtn.disabled = true;
+  try {
+    const res = await fetch('https://report.bingeoutofficial.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        issueType: type,
+        description: desc,
+        pageUrl: location.href,
+        referrer: document.referrer || 'Direct / Unknown'
+      })
+    });
+    if (!res.ok) throw new Error('Failed');
+    alert('Issue reported successfully');
+    closeReportModal();
+    issueTypeSelect.value = '';
+    document.getElementById('issueDesc').value = '';
+    submitBtn.disabled = true;
+  } catch (e) {
+    alert('Failed to report issue. Try again.');
+  } finally {
+    submitBtn.disabled = issueTypeSelect.value === '';
+  }
+}
+
+// Video Fit Toggle
+const fitModes = ['object-cover', 'object-contain', 'object-fill'];
+const fitLabels = { 'object-cover': 'Cover', 'object-contain': 'Contain', 'object-fill': 'Fill' };
+let fitIndex = 0; // starts at cover (matches current class)
+
+const fitButton = document.getElementById('fit-button');
+
+const svgClass = `class="text-white w-6 h-6 md:w-full md:h-full"`;
+function updateFitIcon(mode) {
+  if (mode === 'object-cover') {
+    // Cover: outward arrows on a rectangle
+    fitButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" ${svgClass} viewBox="0 0 24 16"><path fill="currentColor" d="M0 0h5v2H2v3H0zm19 0h5v5h-2V2h-3zM0 11h2v3h3v2H0zm22 3h-3v2h5v-5h-2zM1 1h22v14H1z" fill-rule="evenodd" clip-rule="evenodd"/></svg>`;
+  } else if (mode === 'object-contain') {
+    // Contain: inward arrows on a rectangle
+    fitButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" ${svgClass} viewBox="0 0 24 16"><path fill="currentColor" d="M0 0h5v2H2v3H0zm19 0h5v5h-2V2h-3zM0 11h2v3h3v2H0zm22 3h-3v2h5v-5h-2zM7 4h10v8H7z"/></svg>`;
+  } else {
+    // Fill: solid filled rectangle
+    fitButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" ${svgClass} viewBox="0 0 24 16"><rect x="0" y="0" width="24" height="16" fill="currentColor"/></svg>`;
+  }
+}
+
+fitButton.addEventListener('click', () => {
+  // Remove current fit class
+  video.classList.remove(fitModes[fitIndex]);
+  // Advance to next
+  fitIndex = (fitIndex + 1) % fitModes.length;
+  const newMode = fitModes[fitIndex];
+  video.classList.add(newMode);
+
+  // Show toast
+  showToast(`Fit: ${fitLabels[newMode]}`);
+});
+
+function showToast(msg) {
+  let toast = document.getElementById('fit-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'fit-toast';
+    toast.style.cssText = 'position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;transition:opacity 0.3s;';
+    document.getElementById('video-container').appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.style.opacity = '0', 1500);
+}
+</script>
+<!-- Monetag Smart Link: once per visit, skip if embedded from pages.dev -->
+<script>
+(function () {
+    var STORAGE_KEY = 'monetag_onclick_shown';
+
+    var ref = document.referrer || '';
+    var isEmbedded = window.self !== window.top;
+    if (isEmbedded && ref.includes('pages.dev')) return;
+
+    if (sessionStorage.getItem(STORAGE_KEY)) return;
+
+    document.onclick = function () {
+        if (sessionStorage.getItem(STORAGE_KEY)) return;
+        sessionStorage.setItem(STORAGE_KEY, '1');
+        window.open('https://crn77.com/4/9119528', '_blank');
+    };
+})();
+</script>
 </body>
 </html>
