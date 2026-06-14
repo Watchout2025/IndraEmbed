@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Primary Meta Tags -->
+  <title>Vidout – Multi-Audio Player for Movies & TV Shows</title>
+  <meta name="title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
+  <meta name="description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+  <link rel="icon" href="/icons/header-logo.png" type="image/png">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vidout.pages.dev/">
+  <meta property="og:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
+  <meta property="og:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+  <meta property="og:image" content="/icons/header-logo.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://vidout.pages.dev/">
+  <meta property="twitter:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
+  <meta property="twitter:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+  <meta property="twitter:image" content="/icons/header-logo.png">
+
+  <style>
+    /* Basic Reset & Body Styles */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #000;
+      color: white;
+      line-height: 1.6;
+    }
+
+    /* Helper class to hide elements */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Header Styling */
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between; /* Distributes space between left and right groups */
+      align-items: center;
+      z-index: 999;
+      flex-wrap: wrap; /* Allow wrapping on small screens */
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-logo {
+      height: 26px;
+      width: auto; /* Ensure aspect ratio is maintained */
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      white-space: nowrap; /* Prevent title from breaking */
+    }
+
+    /* Nav is now inside header-right */
+    header nav {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap; /* Allow nav items to wrap */
+    }
+
+    header nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem; /* Add padding for clickable area */
+      border-radius: 8px; /* Rounded corners for clean look */
+      transition: background 0.3s ease, color 0.3s ease; /* Smooth transitions for hover */
+      background: transparent; /* Ensure no background */
+      border: none; /* Ensure no border */
+      box-shadow: none; /* Ensure no shadow */
+    }
+
+    header nav a:hover {
+      color: red; /* Highlight on hover */
+      background: rgba(255, 255, 255, 0.08); /* Subtle background on hover */
+    }
+
+    header nav a.active-nav {
+      color: red; /* Active color */
+      background: rgba(255, 0, 0, 0.1); /* Subtle red background for active state */
+      border-color: transparent; /* No border for active state */
+      box-shadow: none; /* No shadow for active state */
+    }
+
+    .header-right {
+      display: flex; /* Make this a flex container for its children (nav and watchout-link) */
+      align-items: center;
+      gap: 1.5rem; /* Space between nav and watchout-link */
+    }
+
+    .watchout-link {
+      display: block; /* Make the anchor tag a block to apply styling */
+      height: 40px; /* Larger clickable area */
+      width: 40px; /* Larger clickable area */
+      border-radius: 10px; /* Square with rounded corners */
+      display: flex; /* Use flex to center the image inside */
+      justify-content: center;
+      align-items: center;
+      
+      /* Liquid Glass Effect */
+      background: rgba(255, 255, 255, 0.1); /* Subtle background for the outer layer */
+      backdrop-filter: blur(5px); /* Outer blur effect */
+      border: 1px solid rgba(255, 255, 255, 0.15); /* Outer light border */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Outer subtle shadow */
+      transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .watchout-link:hover {
+      transform: scale(1.1); /* Slightly enlarge on hover */
+      background: rgba(255, 255, 255, 0.2); /* Slightly more opaque on hover */
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .watchout-logo {
+      height: 30px; /* Adjust size as needed */
+      width: 30px; /* Keep width and height same for perfect circle */
+      border-radius: 50%; /* Make it round */
+      object-fit: cover; /* Ensure the image covers the area */
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem; /* Consistent spacing between elements */
+    }
+
+    /* Description Text */
+    .description {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 1rem; /* Adjust margin for overall flow */
+    }
+
+    /* Main Heading Style */
+    .main-heading {
+      text-align: center;
+      font-size: 2.5rem; /* Big font size */
+      color: white;
+      margin-bottom: 1rem;
+    }
+
+    /* Style for the underlined text */
+    .underline-red {
+      text-decoration: none; /* Remove default underline */
+      border-bottom: 3px solid red; /* Red underline */
+      padding-bottom: 2px; /* Space between text and underline */
+    }
+
+    /* Tabs Styling */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+      gap: 1rem; /* Space between tabs */
+    }
+
+    .tab {
+      padding: 0.75rem 1.5rem; /* Larger clickable area */
+      border-radius: 8px; /* More rounded corners */
+      cursor: pointer;
+      background: #222;
+      border: 1px solid #444;
+      transition: background 0.3s ease, border-color 0.3s ease; /* Smooth transitions */
+      font-weight: 600;
+      text-align: center;
+      flex-grow: 1; /* Allow tabs to grow and fill space */
+      max-width: 150px; /* Limit max width for tabs */
+    }
+
+    .tab:hover {
+      background: #333; /* Darker on hover */
+    }
+
+    .tab.active {
+      background: red;
+      color: white;
+      border-color: red;
+    }
+
+    /* Input Fields */
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 0.75rem; /* Larger padding */
+      border-radius: 8px; /* More rounded corners */
+      border: 1px solid #444;
+      background: #1a1a1a;
+      color: white;
+      box-sizing: border-box; /* Include padding in width */
+      transition: border-color 0.3s ease; /* Smooth transition */
+      margin-bottom: 1rem; /* Added margin below each input */
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: red; /* Highlight focus with red */
+    }
+
+    /* Special adjustment for the last input container to prevent double margin */
+    .input-with-icon-container {
+      position: relative;
+      width: 100%;
+      margin-top: 0; /* Reset margin-top as individual inputs now have margin-bottom */
+      margin-bottom: 1rem; /* Add margin below this container to match others */
+    }
+
+    .embed-url-output {
+      width: 100%;
+      padding: 0.75rem 3.5rem 0.75rem 0.75rem; /* Adjusted padding for icon */
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #1a1a1a;
+      color: white;
+      box-sizing: border-box;
+      font-family: monospace; /* Use monospace for URLs */
+      overflow: hidden; /* Hide overflow text */
+      text-overflow: ellipsis; /* Add ellipsis for overflow */
+      white-space: nowrap; /* Prevent wrapping */
+    }
+
+    .copy-button {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 6px;
+      /* Removed padding */
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease, opacity 0.3s ease;
+      z-index: 10;
+      height: 40px; /* Explicitly set height to match input's visual height */
+      width: 40px; /* Make it a square for consistent click area */
+    }
+
+    .copy-button:hover {
+      background: rgba(255, 255, 255, 0.1); /* Subtle background on hover */
+    }
+
+    .copy-button svg {
+      fill: white;
+      width: 20px;
+      height: 20px;
+    }
+
+    .copy-tooltip {
+      position: absolute;
+      top: -30px; /* Position above the button */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      pointer-events: none; /* Allow clicks through */
+    }
+
+    .copy-tooltip.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+
+    /* Iframe Styling */
+    iframe {
+      width: 100%;
+      min-height: 400px; /* Ensure a minimum height */
+      height: 500px; /* Default height */
+      border: none;
+      border-radius: 10px;
+      margin-top: 1rem; /* Adjust margin */
+      background-color: #1a1a1a; /* Placeholder background */
+      display: block; /* Ensure it takes full width */
+      overflow: hidden; /* This removes scrolling */
+    }
+
+    /* Loading Indicator */
+    .loading-indicator {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 1.1rem;
+      display: none; /* Hidden by default */
+    }
+
+    /* Footer Styling */
+    footer {
+      height: 70px;
+      margin: 0 3%;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1); /* Lighter border */
+      justify-content: flex-start; /* Aligned to the left */
+    }
+
+    .footer-content {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .footer-logo {
+      height: 23px;
+      padding-top: 1px;
+      width: auto;
+    }
+
+    .footer-text {
+      color: #6b7a8a;
+      font-size: 0.75rem; /* text-xs */
+      border-left: 1px solid #fff;
+      padding-left: 7px;
+    }
+
+    /* Documentation Section Styling */
+    .documentation-section {
+      padding: 1rem;
+      background: #1a1a1a;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      line-height: 1.8; /* Better readability */
+    }
+
+    .documentation-section h1,
+    .documentation-section h2,
+    .documentation-section h3,
+    .documentation-section h4 {
+      color: white;
+      margin-top: 1.5rem;
+      margin-bottom: 0.8rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.5rem;
+    }
+
+    .documentation-section h1 { font-size: 2.2rem; }
+    .documentation-section h2 { font-size: 1.8rem; }
+    .documentation-section h3 { font-size: 1.4rem; }
+    .documentation-section h4 { font-size: 1.2rem; }
+
+    .documentation-section p {
+      margin-bottom: 1rem;
+    }
+
+    .documentation-section ul {
+      list-style-type: disc;
+      margin-left: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .documentation-section ul li {
+      margin-bottom: 0.5rem;
+    }
+
+    .documentation-section pre {
+      background: #0d1117; /* Darker background for code blocks */
+      color: #c9d1d9; /* Lighter text for code */
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto; /* Enable horizontal scrolling for long lines */
+      font-family: monospace;
+      margin-bottom: 1rem;
+    }
+
+    .documentation-section code {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    .documentation-section strong {
+      color: red; /* Highlight strong text in documentation */
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      /* On small screens, header-left and header-right will stack */
+      .header-left, .header-right {
+        width: 100%;
+        justify-content: center; /* Center their contents */
+        margin: 0; /* Remove auto margins for stacking */
+      }
+      .header-left { order: 1; }
+      .header-right { order: 2; margin-top: 10px; } /* Add some space */
+
+      /* Nav is now inside header-right, so its order is relative to other header-right items */
+      header nav {
+        justify-content: center; /* Center nav items on small screens */
+        width: auto; /* Allow nav to shrink/grow as needed */
+      }
+
+      .container {
+        margin: 1rem auto;
+        padding: 0.5rem;
+      }
+
+      .tabs {
+        flex-direction: column; /* Stack tabs vertically */
+        gap: 0.5rem;
+      }
+
+      .tab {
+        width: 100%;
+        max-width: none; /* Allow tabs to take full width */
+      }
+
+      .input-with-icon-container {
+        /* No change needed here, it's already flexible */
+      }
+
+      .copy-button {
+        /* On smaller screens, the button is already positioned correctly within the input bar */
+      }
+
+      footer {
+        height: auto;
+        padding: 1rem; /* Re-added padding for mobile to prevent content from touching edges */
+        margin-bottom: 60px; /* Adjust for mobile footer */
+      }
+
+      .footer-content {
+        flex-direction: column; /* Stack footer content vertically */
+        text-align: center;
+      }
+
+      .footer-text {
+        border-left: none; /* Remove border on small screens */
+        padding-left: 0;
+        margin-top: 5px; /* Space between logo and text */
+      }
+
+      .main-heading {
+        font-size: 1.8rem; /* Adjust font size for smaller screens */
+      }
+    }
+
+    @media (max-width: 480px) {
+      header h1 {
+        font-size: 1.2rem;
+      }
+      .header-logo {
+        height: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img class="header-logo" src="/icons/header-logo.png" alt="Vidout Logo" />
+      <h1>Vidout</h1>
+    </div>
+    <div class="header-right">
+      <nav>
+        <a href="#" id="playerNavLink" class="active-nav">Player</a>
+        <a href="#" id="docsNavLink">Docs</a>
+      </nav>
+      <a href="https://watchout.fun" target="_blank" title="Visit Watch Out" class="watchout-link">
+        <img src="https://simgbb.com/avatar/tPYRMBtx3XSy.png" alt="Watch Out Logo" class="watchout-logo">
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Player Section -->
+    <div id="playerSection">
+      <h2 class="main-heading"><span class="underline-red">Multi Audio</span> Video Streaming API</h2>
+      <div class="description">
+        <p><strong>Vidout</strong> is the first public player to support multi-audio movie & series embedding with a modern UI. Used by <strong>Watch Out</strong>, powered by <strong>Indra Group</strong>.</p>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" id="movieTab">Movie</div>
+        <div class="tab" id="tvTab">TV Show</div>
+      </div>
+
+      <input type="text" id="tmdbInput" placeholder="Enter TMDB ID" value="299534" />
+      <input type="number" id="seasonInput" placeholder="Enter Season Number" style="display: none" />
+      <input type="number" id="episodeInput" placeholder="Enter Episode Number" style="display: none" />
+
+      <div class="input-with-icon-container">
+        <input type="text" id="embedUrlOutput" class="embed-url-output" readonly placeholder="Generated Embed URL" />
+        <button id="copyButton" class="copy-button" title="Copy URL">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+          </svg>
+          <span id="copyTooltip" class="copy-tooltip">Copied!</span>
+        </button>
+      </div>
+
+      <div class="loading-indicator" id="loadingIndicator">Loading content...</div>
+      <iframe id="embedFrame" src="https://vidout.pages.dev/movie/299534" title="Vidout Player"></iframe>
+    </div>
+
+    <!-- Documentation Section (Initially hidden) -->
+    <div id="documentationSection" class="documentation-section hidden">
+      <h1>Documentation</h1>
+      <p>Welcome to <strong>Vidout</strong> documentation. Our player can be easily integrated into any website using simple iframe embeds. Follow this guide to get started.</p>
+
+      <h2>Quick Start</h2>
+      <p>Get started with Vidout in less than 5 minutes.</p>
+
+      <h3>1. Add the Player</h3>
+      <p>Copy and paste this code into your HTML where you want the player to appear:</p>
+      <p><strong>Basic Implementation</strong></p>
+      <pre><code>&lt;iframe
+  src="https://vidout.pages.dev/movie/299534"
+  width="100%"
+  height="100%"
+  frameborder="0"
+  allowfullscreen
+  allow="encrypted-media"
+&gt;&lt;/iframe&gt;
+</code></pre>
+
+      <h3>2. Make it Responsive</h3>
+      <p>Wrap the iframe in this container to maintain the correct aspect ratio, ensuring it looks great on any device:</p>
+      <p><strong>Responsive Container</strong></p>
+      <pre><code>&lt;!-- 16:9 Aspect Ratio Container --&gt;
+&lt;div style="position: relative; padding-bottom: 56.25%; height: 0;"&gt;
+  &lt;iframe
+    src="https://vidout.pages.dev/movie/299534"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    frameborder="0"
+    allowfullscreen
+  &gt;&lt;/iframe&gt;
+&lt;/div&gt;
+</code></pre>
+
+      <h2>URL Structure</h2>
+      <p>Understanding how to construct the player URL is key to embedding your desired content. Both movies and TV shows (including anime) use TMDB IDs.</p>
+
+      <h3>Movies (and Anime Movies)</h3>
+      <pre><code>https://vidout.pages.dev/movie/tmdb_id
+</code></pre>
+      <p><strong>Movie Example</strong></p>
+      <pre><code>&lt;!-- Avengers: Endgame --&gt;
+&lt;iframe src="https://vidout.pages.dev/movie/299534"&gt;&lt;/iframe&gt;
+</code></pre>
+      <p><strong>Anime Movie Example</strong></p>
+      <pre><code>&lt;!-- Spirited Away --&gt;
+&lt;iframe src="https://vidout.pages.dev/movie/129"&gt;&lt;/iframe&gt;
+</code></pre>
+
+      <h3>TV Shows (and Anime Series)</h3>
+      <pre><code>https://vidout.pages.dev/tv/tmdb_id/season/episode
+</code></pre>
+      <p><strong>TV Show Example</strong></p>
+      <pre><code>&lt;!-- Game of Thrones S01E01 --&gt;
+&lt;iframe src="https://vidout.pages.dev/tv/1399/1/1"&gt;&lt;/iframe&gt;
+</code></pre>
+      <p><strong>Anime Show Example</strong></p>
+      <pre><code>&lt;!-- Attack on Titan Season 1 Episode 1 --&gt;
+&lt;iframe src="https://vidout.pages.dev/tv/1429/1/1"&gt;&lt;/iframe&gt;
+</code></pre>
+
+      <h2>Finding Content IDs</h2>
+      <p>Learn how to find IDs for movies, TV shows, and anime.</p>
+
+      <h3>TMDB IDs</h3>
+      <p>Movie, TV show, and Anime IDs can be found with <strong>TMDB API</strong> (<a href="https://developer.themoviedb.org" target="_blank">developer.themoviedb.org</a>) or in the URL when visiting themoviedb.org:</p>
+      <ul>
+        <li><strong>Movies</strong>: <code>themoviedb.org/movie/299534</code></li>
+        <li><strong>TV Shows</strong>: <code>themoviedb.org/tv/1399</code></li>
+        <li><strong>Anime (Shows/Movies)</strong>: Search for the anime on TMDB and use its corresponding Movie or TV show ID.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <img src="https://i.ibb.co/B2gPPxmV/Copy-of-Ratna-Group-Wallpaper-1-1.png" alt="Indra Group logo" class="footer-logo">
+      <span class="footer-text">© Vidout, Inc</span>
+    </div>
+  </footer>
+
+  <script>
+    // Self-executing anonymous function to encapsulate variables and avoid global pollution
+    (function() {
+      const movieTab = document.getElementById('movieTab');
+      const tvTab = document.getElementById('tvTab');
+      const tmdbInput = document.getElementById('tmdbInput');
+      const seasonInput = document.getElementById('seasonInput');
+      const episodeInput = document.getElementById('episodeInput');
+      const embedUrlOutput = document.getElementById('embedUrlOutput');
+      const copyButton = document.getElementById('copyButton');
+      const copyTooltip = document.getElementById('copyTooltip');
+      const embedFrame = document.getElementById('embedFrame');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+
+      // New elements for section switching
+      const playerNavLink = document.getElementById('playerNavLink');
+      const docsNavLink = document.getElementById('docsNavLink');
+      const playerSection = document.getElementById('playerSection');
+      const documentationSection = document.getElementById('documentationSection');
+
+      let selectedType = 'movie'; // Default selected type
+
+      /**
+       * Shows the specified content section and hides others.
+       * Updates the active state of navigation links.
+       * @param {string} sectionId - The ID of the section to show ('playerSection' or 'documentationSection').
+       */
+      function showSection(sectionId) {
+        // Hide all sections
+        playerSection.classList.add('hidden');
+        documentationSection.classList.add('hidden');
+
+        // Remove active class from all nav links
+        playerNavLink.classList.remove('active-nav');
+        docsNavLink.classList.remove('active-nav');
+
+        // Show the selected section and set active nav link
+        if (sectionId === 'playerSection') {
+          playerSection.classList.remove('hidden');
+          playerNavLink.classList.add('active-nav');
+          // Ensure iframe content is updated when player section is shown
+          updateFrame();
+        } else if (sectionId === 'documentationSection') {
+          documentationSection.classList.remove('hidden');
+          docsNavLink.classList.add('active-nav');
+        }
+      }
+
+      /**
+       * Updates the iframe's source and the embed URL output based on selected type and input values.
+       * Shows a loading indicator while the iframe content loads.
+       */
+      function updateFrame() {
+        // Only update iframe if the player section is currently visible
+        if (playerSection.classList.contains('hidden')) {
+          return;
+        }
+
+        const id = tmdbInput.value.trim();
+        let newSrc = '';
+
+        // Show loading indicator
+        loadingIndicator.style.display = 'block';
+        embedFrame.style.display = 'none'; // Hide iframe during loading
+
+        if (!id) {
+          embedFrame.src = 'about:blank'; // Clear iframe if no ID
+          embedUrlOutput.value = ''; // Clear output URL
+          loadingIndicator.style.display = 'none';
+          embedFrame.style.display = 'block';
+          return;
+        }
+
+        if (selectedType === 'movie') {
+          newSrc = `https://vidout.pages.dev/movie/${id}`;
+        } else {
+          const season = seasonInput.value.trim();
+          const episode = episodeInput.value.trim();
+
+          // Basic validation for TV show inputs
+          if (!season || !episode || isNaN(season) || isNaN(episode) || parseInt(season) <= 0 || parseInt(episode) <= 0) {
+            embedFrame.src = 'about:blank'; // Clear iframe
+            embedUrlOutput.value = ''; // Clear output URL
+            loadingIndicator.style.display = 'none';
+            embedFrame.style.display = 'block';
+            return;
+          }
+          newSrc = `https://vidout.pages.dev/tv/${id}/${season}/${episode}`;
+        }
+        embedFrame.src = newSrc;
+        embedUrlOutput.value = newSrc; // Update the output URL field
+      }
+
+      /**
+       * Handles the click event for the Movie tab.
+       * Sets the selected type to 'movie' and updates UI visibility.
+       */
+      movieTab.addEventListener('click', () => {
+        selectedType = 'movie';
+        movieTab.classList.add('active');
+        tvTab.classList.remove('active');
+        seasonInput.style.display = 'none';
+        episodeInput.style.display = 'none';
+        tmdbInput.value = '299534'; // Default movie ID
+        updateFrame();
+      });
+
+      /**
+       * Handles the click event for the TV Show tab.
+       * Sets the selected type to 'tv' and updates UI visibility.
+       */
+      tvTab.addEventListener('click', () => {
+        selectedType = 'tv';
+        tvTab.classList.add('active');
+        movieTab.classList.remove('active');
+        seasonInput.style.display = 'block';
+        episodeInput.style.display = 'block';
+        tmdbInput.value = '93405'; // Default TV show ID
+        seasonInput.value = '1';    // Default season
+        episodeInput.value = '1';   // Default episode
+        updateFrame();
+      });
+
+      /**
+       * Copies the content of the embedUrlOutput to the clipboard.
+       * Provides visual feedback using a tooltip.
+       */
+      copyButton.addEventListener('click', () => {
+        const urlToCopy = embedUrlOutput.value;
+        if (urlToCopy) {
+          // Create a temporary textarea element to copy the text
+          const tempTextArea = document.createElement('textarea');
+          tempTextArea.value = urlToCopy;
+          document.body.appendChild(tempTextArea);
+          tempTextArea.select();
+          try {
+            document.execCommand('copy'); // Execute copy command
+            copyTooltip.classList.add('show'); // Show tooltip
+            setTimeout(() => {
+              copyTooltip.classList.remove('show'); // Hide tooltip after a delay
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy text: ', err);
+            // Optionally, provide a fallback message to the user
+          } finally {
+            document.body.removeChild(tempTextArea); // Clean up the temporary element
+          }
+        }
+      });
+
+      // Add event listeners for input changes to trigger frame update
+      tmdbInput.addEventListener('input', updateFrame);
+      seasonInput.addEventListener('input', updateFrame);
+      episodeInput.addEventListener('input', updateFrame);
+
+      // Hide loading indicator and show iframe once content is loaded
+      embedFrame.addEventListener('load', () => {
+        loadingIndicator.style.display = 'none';
+        embedFrame.style.display = 'block';
+      });
+
+      // Event listeners for navigation links
+      playerNavLink.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent default link behavior
+        showSection('playerSection');
+      });
+
+      docsNavLink.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent default link behavior
+        showSection('documentationSection');
+      });
+
+      // Initial state: Show player section
+      showSection('playerSection');
+    })();
+  </script>
+</body>
+</html>
