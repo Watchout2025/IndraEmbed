@@ -11,14 +11,14 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://indraembed.netlify.app/">
+  <meta property="og:url" content="https://vidout.pages.dev/">
   <meta property="og:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
   <meta property="og:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
   <meta property="og:image" content="/icons/header-logo.png">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://indraembed.netlify.app/">
+  <meta property="twitter:url" content="https://vidout.pages.dev/">
   <meta property="twitter:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
   <meta property="twitter:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
   <meta property="twitter:image" content="/icons/header-logo.png">
@@ -531,7 +531,7 @@
       </div>
 
       <div class="loading-indicator" id="loadingIndicator">Loading content...</div>
-      <iframe id="embedFrame" src="https://indraembed.netlify.app/movie/299534" title="Vidout Player"></iframe>
+      <iframe id="embedFrame" src="https://vidout.pages.dev/movie/299534" title="Vidout Player"></iframe>
     </div>
 
     <!-- Documentation Section (Initially hidden) -->
@@ -546,7 +546,7 @@
       <p>Copy and paste this code into your HTML where you want the player to appear:</p>
       <p><strong>Basic Implementation</strong></p>
       <pre><code>&lt;iframe
-  src="https://indraembed.netlify.app/movie/299534"
+  src="https://vidout.pages.dev/movie/299534"
   width="100%"
   height="100%"
   frameborder="0"
@@ -561,7 +561,7 @@
       <pre><code>&lt;!-- 16:9 Aspect Ratio Container --&gt;
 &lt;div style="position: relative; padding-bottom: 56.25%; height: 0;"&gt;
   &lt;iframe
-    src="https://indraembed.netlify.app/movie/299534"
+    src="https://vidout.pages.dev/movie/299534"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
     frameborder="0"
     allowfullscreen
@@ -573,27 +573,27 @@
       <p>Understanding how to construct the player URL is key to embedding your desired content. Both movies and TV shows (including anime) use TMDB IDs.</p>
 
       <h3>Movies (and Anime Movies)</h3>
-      <pre><code>https://indraembed.netlify.app/movie/tmdb_id
+      <pre><code>https://vidout.pages.dev/movie/tmdb_id
 </code></pre>
       <p><strong>Movie Example</strong></p>
       <pre><code>&lt;!-- Avengers: Endgame --&gt;
-&lt;iframe src="https://indraembed.netlify.app/movie/299534"&gt;&lt;/iframe&gt;
+&lt;iframe src="https://vidout.pages.dev/movie/299534"&gt;&lt;/iframe&gt;
 </code></pre>
       <p><strong>Anime Movie Example</strong></p>
       <pre><code>&lt;!-- Spirited Away --&gt;
-&lt;iframe src="https://indraembed.netlify.app/movie/129"&gt;&lt;/iframe&gt;
+&lt;iframe src="https://vidout.pages.dev/movie/129"&gt;&lt;/iframe&gt;
 </code></pre>
 
       <h3>TV Shows (and Anime Series)</h3>
-      <pre><code>https://indraembed.netlify.app/tv/tmdb_id/season/episode
+      <pre><code>https://vidout.pages.dev/tv/tmdb_id/season/episode
 </code></pre>
       <p><strong>TV Show Example</strong></p>
       <pre><code>&lt;!-- Game of Thrones S01E01 --&gt;
-&lt;iframe src="https://indraembed.netlify.app/tv/1399/1/1"&gt;&lt;/iframe&gt;
+&lt;iframe src="https://vidout.pages.dev/tv/1399/1/1"&gt;&lt;/iframe&gt;
 </code></pre>
       <p><strong>Anime Show Example</strong></p>
       <pre><code>&lt;!-- Attack on Titan Season 1 Episode 1 --&gt;
-&lt;iframe src="https://indraembed.netlify.app/tv/1429/1/1"&gt;&lt;/iframe&gt;
+&lt;iframe src="https://vidout.pages.dev/tv/1429/1/1"&gt;&lt;/iframe&gt;
 </code></pre>
 
       <h2>Finding Content IDs</h2>
@@ -690,7 +690,7 @@
         }
 
         if (selectedType === 'movie') {
-          newSrc = `https://indraembed.netlify.app/movie/${id}`;
+          newSrc = `https://vidout.pages.dev/movie/${id}`;
         } else {
           const season = seasonInput.value.trim();
           const episode = episodeInput.value.trim();
@@ -703,7 +703,7 @@
             embedFrame.style.display = 'block';
             return;
           }
-          newSrc = `https://indraembed.netlify.app/tv/${id}/${season}/${episode}`;
+          newSrc = `https://vidout.pages.dev/tv/${id}/${season}/${episode}`;
         }
         embedFrame.src = newSrc;
         embedUrlOutput.value = newSrc; // Update the output URL field
