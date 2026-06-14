@@ -1,3 +1,2 @@
-/                               /index.html     200
 /movie/:id                      /player.html    200
 /tv/:id/:season/:episode        /player.html    200
