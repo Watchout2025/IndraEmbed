@@ -2,28 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Primary Meta Tags -->
-  <title>Vidout – Multi-Audio Player for Movies & TV Shows</title>
-  <meta name="title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
-  <meta name="description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
-  <link rel="icon" href="/icons/header-logo.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Vidout – Multi-Audio Player for Movies & TV Shows</title>
+    <meta name="title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
+    <meta name="description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+    <link rel="icon" href="/icons/header-logo.png" type="image/png">
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://vidout.pages.dev/">
-  <meta property="og:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
-  <meta property="og:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
-  <meta property="og:image" content="/icons/header-logo.png">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vidout.pages.dev/">
+    <meta property="og:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
+    <meta property="og:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+    <meta property="og:image" content="/icons/header-logo.png">
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://vidout.pages.dev/">
-  <meta property="twitter:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
-  <meta property="twitter:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
-  <meta property="twitter:image" content="/icons/header-logo.png">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vidout.pages.dev/">
+    <meta property="twitter:title" content="Vidout – Multi-Audio Player for Movies & TV Shows">
+    <meta property="twitter:description" content="Stream movies and TV shows with multiple audio tracks using TMDB ID. Powered by RPMShare and Videasy. Developed by Indra Group and used in Watch Out.">
+    <meta property="twitter:image" content="/icons/header-logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <meta name="google-site-verification" content="shv4RT9vqJOrVukMqKMT7iJJSuuAMfQn8uDoEsL_Zdw" />
+
     <style>
         @font-face {
             font-family: 'Netflix Sans';
@@ -540,6 +540,12 @@
     </style>
 </head>
 <body>
+<div id="drag-overlay" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.82);border:4px dashed rgba(255,255,255,0.7);box-sizing:border-box;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:none;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" fill="none" viewBox="0 0 24 24">
+        <path fill="white" fill-rule="evenodd" d="M12 2a1 1 0 0 1 .707.293l4 4a1 1 0 0 1-1.414 1.414L13 5.414V15a1 1 0 1 1-2 0V5.414L8.707 7.707A1 1 0 0 1 7.293 6.293l4-4A1 1 0 0 1 12 2ZM4 17a1 1 0 0 1 1 1v1h14v-1a1 1 0 1 1 2 0v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a1 1 0 0 1 1-1Z" clip-rule="evenodd"/>
+    </svg>
+    <p style="color:#fff;font-size:1.4rem;font-weight:700;margin:0;letter-spacing:0.02em;text-shadow:0 2px 8px rgba(0,0,0,.9);">Drop video to play</p>
+</div>
 
 <div id="video-container" class="relative">
     <video id="video" class="h-full w-full object-contain" autoplay playsinline style="--cue-bottom:80px;"></video>
@@ -852,6 +858,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- IntroDB skip prompt (intro / recap / credits / preview) -->
     <div id="skip-prompt">
@@ -1847,8 +1855,7 @@ function setupUIControls() {
     // Next Episode button — only shown on TV routes, re-evaluated on each episode change
     const nextEpisodeButton = document.getElementById('next-episode-button');
     nextEpisodeButton.addEventListener('click', () => {
-        const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i)
-                     || window.location.pathname.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
+        const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
         if (!tvMatch) return;
         playEpisode(tvMatch[1], Number(tvMatch[2]), Number(tvMatch[3]) + 1);
     });
@@ -1862,8 +1869,7 @@ function setupUIControls() {
    ------------------------------------------------------------------------- */
 async function updateNextEpisodeButtonVisibility() {
     const nextEpisodeButton = document.getElementById('next-episode-button');
-    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i)
-                 || window.location.pathname.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
+    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
 
     if (!tvMatch) {
         nextEpisodeButton.classList.add('hidden');
@@ -2013,11 +2019,12 @@ document.addEventListener('keydown', handleKeyboardShortcuts);
    HLS / DIRECT VIDEO INITIALISATION
    ------------------------------------------------------------------------- */
 function isDirectVideoUrl(url) {
+    if (url && url.startsWith('blob:')) return true;
     try {
         const path = new URL(url).pathname.toLowerCase();
-        return /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v)(\?|$)/.test(path);
+        return /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v|ts|mts|m2ts)(\?|$)/.test(path);
     } catch (e) {
-        return /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v)(\?|$)/.test(url.toLowerCase());
+        return /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v|ts|mts|m2ts)(\?|$)/.test(url.toLowerCase());
     }
 }
 
@@ -2155,6 +2162,10 @@ async function playMovie(movieId) {
     try {
         const res = await fetch(githubUrl, { cache: 'no-store' });
         if (!res.ok) {
+            if (res.status === 404) {
+                showFallbackPlayer('movie', movieId);
+                return;
+            }
             displayError(`Could not load movie data (HTTP ${res.status}).`);
             hideLoader();
             return;
@@ -2179,6 +2190,38 @@ async function playMovie(movieId) {
 }
 
 /* -------------------------------------------------------------------------
+   FALLBACK PLAYER  –  used when no stream is available for this title
+   (e.g. GitHub returns 404). Replaces the whole player with a full-screen
+   iframe pointing to an external player.
+   ------------------------------------------------------------------------- */
+function showFallbackPlayer(mediaType, ...idParts) {
+    hideLoader();
+
+    let src;
+    if (mediaType === 'movie') {
+        const [movieId] = idParts;
+        src = `https://player.videasy.to/movie/${movieId}`;
+    } else if (mediaType === 'tv') {
+        const [seriesId, seasonNumber, episodeNumber] = idParts;
+        src = `https://player.videasy.to/tv/${seriesId}/${seasonNumber}/${episodeNumber}`;
+    } else {
+        return;
+    }
+
+    document.body.innerHTML = '';
+    document.body.style.margin = '0';
+    document.body.style.overflow = 'hidden';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;margin:0;padding:0;';
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+
+    document.body.appendChild(iframe);
+}
+
+/* -------------------------------------------------------------------------
    PLAY EPISODE  –  /tv/{tmdbId}/S{season}/E{episode}
    ------------------------------------------------------------------------- */
 async function playEpisode(seriesId, seasonNumber, episodeNumber) {
@@ -2196,6 +2239,10 @@ async function playEpisode(seriesId, seasonNumber, episodeNumber) {
     try {
         const res = await fetch(githubJsonUrl, { cache: 'no-store' });
         if (!res.ok) {
+            if (res.status === 404) {
+                showFallbackPlayer('tv', seriesId, seasonNumber, episodeNumber);
+                return;
+            }
             displayError(`Could not load season data (HTTP ${res.status}).`);
             hideLoader();
             return;
@@ -2211,8 +2258,7 @@ async function playEpisode(seriesId, seasonNumber, episodeNumber) {
             fetchAndSetTitle('tv', seriesId, seasonNumber, episodeNumber);
             loadIntrodbTimestamps('tv', seriesId, seasonNumber, episodeNumber);
         } else {
-            displayError(`Episode ${episodeNumber} not found in season data.`);
-            hideLoader();
+            showFallbackPlayer('tv', seriesId, seasonNumber, episodeNumber);
         }
     } catch (err) {
         displayError(`Failed to fetch episode data: ${err.message}`);
@@ -2234,8 +2280,7 @@ async function resolveAndPlay() {
         return playMovie(movieMatch[1]);
     }
 
-    const tvMatch = path.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i)
-                 || path.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
+    const tvMatch = path.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
     if (tvMatch) {
         return playEpisode(tvMatch[1], tvMatch[2], tvMatch[3]);
     }
@@ -2756,6 +2801,71 @@ function checkIntrodbSegments() {
    END INTRODB
    ========================================================================= */
 
+
+/* -------------------------------------------------------------------------
+   DRAG & DROP LOCAL VIDEO
+   ------------------------------------------------------------------------- */
+(function () {
+    const ACCEPTED = /\.(mp4|webm|ogg|ogv|mov|mkv|avi|flv|m4v|ts|mts|m2ts)$/i;
+    const dragOverlay = document.getElementById('drag-overlay');
+
+    function hasVideoInTransfer(dt) {
+        if (!dt) return false;
+        // During dragenter/dragover, types is available even before files are accessible
+        const types = Array.from(dt.types || []);
+        return types.includes('Files');
+    }
+
+    function getVideoFile(dt) {
+        if (!dt) return null;
+        const files = Array.from(dt.files || []);
+        return files.find(f => f.type.startsWith('video/') || ACCEPTED.test(f.name)) || null;
+    }
+
+    function showOverlay() { dragOverlay.style.display = 'flex'; }
+    function hideOverlay() { dragOverlay.style.display = 'none'; }
+
+    // Use dragenter/dragleave on window to catch all drags reliably
+    window.addEventListener('dragenter', e => {
+        if (!hasVideoInTransfer(e.dataTransfer)) return;
+        e.preventDefault();
+        showOverlay();
+    });
+
+    // Only hide when leaving the window entirely (relatedTarget is null)
+    window.addEventListener('dragleave', e => {
+        if (e.relatedTarget === null) hideOverlay();
+    });
+
+    window.addEventListener('dragover', e => {
+        if (!hasVideoInTransfer(e.dataTransfer)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    window.addEventListener('drop', e => {
+        e.preventDefault();
+        hideOverlay();
+        const videoFile = getVideoFile(e.dataTransfer);
+        if (!videoFile) return;
+        if (window._localVideoBlobUrl) { URL.revokeObjectURL(window._localVideoBlobUrl); window._localVideoBlobUrl = null; }
+        const blobUrl = URL.createObjectURL(videoFile);
+        window._localVideoBlobUrl = blobUrl;
+        // Tag the blob URL with the original filename so initHlsPlayer can detect the type
+        window._localVideoBlobName = videoFile.name;
+        const iframe = document.getElementById('fallback-iframe');
+        if (iframe) iframe.remove();
+        const name = videoFile.name.replace(/\.[^.]+$/, '');
+        const t1 = document.getElementById('title-main-text');
+        const t2 = document.getElementById('mobile-title-main');
+        if (t1) t1.textContent = name;
+        if (t2) t2.textContent = name;
+        document.title = name;
+        showToast('\u25b6 ' + videoFile.name);
+        initHlsPlayer(blobUrl);
+    });
+})();
+
 window.onload = () => { setupUIControls(); resolveAndPlay(); };
 
 /* -------------------------------------------------------------------------
@@ -2876,7 +2986,7 @@ function showToast(msg) {
     document.onclick = function () {
         if (sessionStorage.getItem(STORAGE_KEY)) return;
         sessionStorage.setItem(STORAGE_KEY, '1');
-        window.open('https://crn77.com/4/9119528', '_blank');
+        window.open('https://crn77.com/4/9069848', '_blank');
     };
 })();
 </script>
