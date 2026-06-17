@@ -3271,17 +3271,11 @@ let _epSeasonCache    = {}; // season number → episode array
 
 function openEpisodePanel() {
     const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    if (!tvMatch) return;
 
-    // Also support ?tmdb=, ?season=, ?episode= query params (used when path routing isn't active)
-    const params       = new URLSearchParams(window.location.search);
-    const seriesId     = tvMatch ? tvMatch[1]       : params.get('tmdb');
-    const seasonNumber = tvMatch ? Number(tvMatch[2]) : Number(params.get('season') || 1);
-    const epNumber     = tvMatch ? Number(tvMatch[3]) : Number(params.get('episode') || 1);
-
-    if (!seriesId) {
-        // Not a TV route — button should be hidden, but guard anyway
-        return;
-    }
+    const seriesId     = tvMatch[1];
+    const seasonNumber = Number(tvMatch[2]);
+    const epNumber     = Number(tvMatch[3]);
 
     episodePanel.classList.add('open');
     episodePanelBackdrop.classList.add('open');
@@ -3511,8 +3505,7 @@ episodePanelBackdrop.addEventListener('click', closeEpisodePanel);
 
 // Hide episode panel button on movie routes; show on TV
 function updateEpisodePanelButtonVisibility() {
-    const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname)
-              || new URLSearchParams(window.location.search).has('tmdb');
+    const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname);
     episodePanelButton.classList.toggle('hidden', !isTv);
 }
 
