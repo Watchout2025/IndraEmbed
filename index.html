@@ -3291,10 +3291,17 @@ function openEpisodePanel() {
     audioSubtitleMenu.classList.add('hidden');
     speedQualityMenu.classList.add('hidden');
 
-    // If same series — just highlight current episode and scroll to it
+    // If same series — sync state and re-render (but re-fetch metadata if select not yet built)
     if (seriesId === _epSeriesId) {
         _epCurrentSeason  = seasonNumber;
         _epCurrentEpisode = epNumber;
+
+        // If the select was never populated (e.g. panel opened for first time after playEpisode set _epSeriesId)
+        if (seasonSelect.options.length === 0 || (seasonSelect.options.length === 1 && seasonSelect.options[0].value === '')) {
+            fetchSeriesInfo(seriesId);
+            return;
+        }
+
         // Sync dropdown to current season
         if (seasonSelect.value !== String(seasonNumber)) {
             seasonSelect.value = seasonNumber;
