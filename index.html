@@ -2483,8 +2483,9 @@ function showFallbackPlayer(mediaType, ...idParts) {
 async function playEpisode(seriesId, seasonNumber, episodeNumber) {
     _revokeAllSubtitleBlobs();
     // Keep episode panel state in sync
-    _epCurrentSeason  = Number(seasonNumber);
-    _epCurrentEpisode = Number(episodeNumber);
+    _epPlayingSeason  = Number(seasonNumber);
+    _epPlayingEpisode = Number(episodeNumber);
+    _epCurrentSeason  = Number(seasonNumber); // reset panel view to playing season
     if (String(seriesId) !== _epSeriesId) {
         _epSeriesId    = String(seriesId);
         _epSeasonCache = {};
@@ -3264,8 +3265,9 @@ const episodePanelButton   = document.getElementById('episode-panel-button');
 /* State */
 let _epSeriesId       = null;
 let _epTotalSeasons   = 0;
-let _epCurrentSeason  = null;
-let _epCurrentEpisode = null;
+let _epPlayingSeason  = null;  // season that is actually playing
+let _epPlayingEpisode = null;  // episode that is actually playing
+let _epCurrentSeason  = null;  // season currently shown in panel (may differ when browsing)
 let _epSeriesName     = '';
 let _epSeasonCache    = {}; // season number → episode array
 
@@ -3277,6 +3279,10 @@ function openEpisodePanel() {
     const seasonNumber = Number(tvMatch[2]);
     const epNumber     = Number(tvMatch[3]);
 
+    // Always update playing state from current URL
+    _epPlayingSeason  = seasonNumber;
+    _epPlayingEpisode = epNumber;
+
     episodePanel.classList.add('open');
     episodePanelBackdrop.classList.add('open');
     clearTimeout(inactivityTimer);
@@ -3287,8 +3293,7 @@ function openEpisodePanel() {
 
     // If same series — sync state and re-render (but re-fetch metadata if select not yet built)
     if (seriesId === _epSeriesId) {
-        _epCurrentSeason  = seasonNumber;
-        _epCurrentEpisode = epNumber;
+        _epCurrentSeason = seasonNumber; // reset panel view to playing season
 
         // If the select was never populated (e.g. panel opened for first time after playEpisode set _epSeriesId)
         if (seasonSelect.options.length === 0 || (seasonSelect.options.length === 1 && seasonSelect.options[0].value === '')) {
@@ -3296,7 +3301,7 @@ function openEpisodePanel() {
             return;
         }
 
-        // Sync dropdown to current season
+        // Sync dropdown to playing season
         if (seasonSelect.value !== String(seasonNumber)) {
             seasonSelect.value = seasonNumber;
         }
@@ -3309,13 +3314,12 @@ function openEpisodePanel() {
     }
 
     // New series — fetch metadata
-    _epSeriesId       = seriesId;
-    _epCurrentSeason  = seasonNumber;
-    _epCurrentEpisode = epNumber;
-    _epTotalSeasons   = 0;
-    _epSeriesName     = '';
-    _epSeasonCache    = {};
-    _epLoadedSeason   = null;
+    _epSeriesId      = seriesId;
+    _epCurrentSeason = seasonNumber;
+    _epTotalSeasons  = 0;
+    _epSeriesName    = '';
+    _epSeasonCache   = {};
+    _epLoadedSeason  = null;
 
     seasonSelect.innerHTML = '<option value="">Loading seasons…</option>';
     episodeList.innerHTML = '';
@@ -3361,7 +3365,8 @@ async function fetchSeriesInfo(seriesId) {
 
         seasonSelect.onchange = () => {
             const chosen = Number(seasonSelect.value);
-            _epCurrentSeason = chosen;
+            // Do NOT overwrite _epCurrentSeason — that tracks what's actually playing.
+            // _epLoadedSeason will be updated inside loadEpisodeSeason.
             loadEpisodeSeason(chosen);
         };
 
@@ -3413,7 +3418,7 @@ function renderEpisodeList(episodes) {
 
     episodes.forEach(ep => {
         const epNum    = ep.episode_number;
-        const isActive = (_epCurrentSeason === _epLoadedSeason) && (epNum === _epCurrentEpisode);
+        const isActive = (_epLoadedSeason === _epPlayingSeason) && (epNum === _epPlayingEpisode);
 
         const li = document.createElement('li');
         li.className = 'episode-item' + (isActive ? ' active' : '');
@@ -3470,8 +3475,6 @@ function renderEpisodeList(episodes) {
 
         li.addEventListener('click', () => {
             if (isActive) { closeEpisodePanel(); return; }
-            _epCurrentEpisode = epNum;
-            // Update URL and play
             playEpisode(_epSeriesId, _epLoadedSeason, epNum);
             closeEpisodePanel();
         });
@@ -3479,11 +3482,13 @@ function renderEpisodeList(episodes) {
         episodeList.appendChild(li);
     });
 
-    // Scroll the active episode into view
-    requestAnimationFrame(() => {
-        const activeEl = episodeList.querySelector('.episode-item.active');
-        if (activeEl) activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    });
+    // Scroll the active episode into view only when browsing the playing season
+    if (_epLoadedSeason === _epPlayingSeason) {
+        requestAnimationFrame(() => {
+            const activeEl = episodeList.querySelector('.episode-item.active');
+            if (activeEl) activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+    }
 }
 
 function closeEpisodePanel() {
@@ -3509,7 +3514,17 @@ function updateEpisodePanelButtonVisibility() {
     episodePanelButton.classList.toggle('hidden', !isTv);
 }
 
-window.onload = () => { setupUIControls(); resolveAndPlay(); };
+window.onload = () => {
+    // Seed playing state from URL so episode panel works correctly on first open
+    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    if (tvMatch) {
+        _epSeriesId       = tvMatch[1];
+        _epPlayingSeason  = Number(tvMatch[2]);
+        _epPlayingEpisode = Number(tvMatch[3]);
+        _epCurrentSeason  = _epPlayingSeason;
+    }
+    setupUIControls(); resolveAndPlay();
+};
 
 /* -------------------------------------------------------------------------
    REPORT ISSUE MODAL
