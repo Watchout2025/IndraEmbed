@@ -346,34 +346,36 @@
             flex-shrink: 0;
         }
         #episode-panel-close:hover { color: #fff; }
-        #episode-season-tabs {
-            display: flex;
-            gap: 0;
-            overflow-x: auto;
-            padding: 10px 20px 0;
+        #episode-season-selector {
+            padding: 12px 20px;
             border-bottom: 1px solid #2a2a2a;
             flex-shrink: 0;
-            scrollbar-width: none;
         }
-        #episode-season-tabs::-webkit-scrollbar { display: none; }
-        .season-tab {
-            background: none;
-            border: none;
-            color: #b3b3b3;
+        #season-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: #2a2a2a;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23ffffff' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 10px;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
             font-family: 'Netflix Sans', sans-serif;
             font-size: 14px;
             font-weight: 600;
-            padding: 8px 16px 10px;
-            cursor: pointer;
-            white-space: nowrap;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -1px;
-            transition: color 0.15s, border-color 0.15s;
+            outline: none;
+            padding: 9px 36px 9px 14px;
+            width: 100%;
+            transition: border-color 0.15s;
         }
-        .season-tab:hover { color: #fff; }
-        .season-tab.active {
+        #season-select:hover { border-color: #666; }
+        #season-select:focus { border-color: rgb(225,0,0); }
+        #season-select option {
+            background: #1a1a1a;
             color: #fff;
-            border-bottom-color: rgb(225,0,0);
         }
         #episode-list-container {
             flex: 1;
@@ -1121,7 +1123,11 @@
             <span id="episode-panel-title">Episodes</span>
             <button id="episode-panel-close" title="Close">&times;</button>
         </div>
-        <div id="episode-season-tabs"></div>
+        <div id="episode-season-selector">
+            <select id="season-select">
+                <option value="">Loading seasons…</option>
+            </select>
+        </div>
         <div id="episode-list-container">
             <div id="episode-panel-loading">
                 <svg style="animation:spin 1s linear infinite;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none"><path opacity="0.3" d="M12 2a10 10 0 1 0 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -3248,7 +3254,7 @@ const episodePanel         = document.getElementById('episode-panel');
 const episodePanelBackdrop = document.getElementById('episode-panel-backdrop');
 const episodePanelClose    = document.getElementById('episode-panel-close');
 const episodePanelTitle    = document.getElementById('episode-panel-title');
-const episodeSeasonTabs    = document.getElementById('episode-season-tabs');
+const seasonSelect             = document.getElementById('season-select');
 const episodeListContainer = document.getElementById('episode-list-container');
 const episodePanelLoading  = document.getElementById('episode-panel-loading');
 const episodePanelError    = document.getElementById('episode-panel-error');
@@ -3283,6 +3289,10 @@ function openEpisodePanel() {
     if (seriesId === _epSeriesId) {
         _epCurrentSeason  = seasonNumber;
         _epCurrentEpisode = epNumber;
+        // Sync dropdown to current season
+        if (seasonSelect.value !== String(seasonNumber)) {
+            seasonSelect.value = seasonNumber;
+        }
         if (_epCurrentSeason !== _epLoadedSeason) {
             loadEpisodeSeason(_epCurrentSeason);
         } else {
@@ -3300,7 +3310,7 @@ function openEpisodePanel() {
     _epSeasonCache    = {};
     _epLoadedSeason   = null;
 
-    episodeSeasonTabs.innerHTML = '';
+    seasonSelect.innerHTML = '<option value="">Loading seasons…</option>';
     episodeList.innerHTML = '';
     episodePanelLoading.style.display = 'flex';
     episodePanelError.style.display   = 'none';
@@ -3320,26 +3330,26 @@ async function fetchSeriesInfo(seriesId) {
         _epTotalSeasons = data.number_of_seasons || 1;
         episodePanelTitle.textContent = _epSeriesName || 'Episodes';
 
-        // Build season tabs (skip season 0 / specials unless only option)
+        // Build season selector dropdown (skip season 0 / specials unless only option)
         const seasons = (data.seasons || []).filter(s => s.season_number > 0);
         if (!seasons.length && data.number_of_seasons) {
             for (let i = 1; i <= data.number_of_seasons; i++) seasons.push({ season_number: i, name: `Season ${i}` });
         }
 
-        episodeSeasonTabs.innerHTML = '';
+        seasonSelect.innerHTML = '';
         seasons.forEach(s => {
-            const btn = document.createElement('button');
-            btn.className = 'season-tab' + (s.season_number === _epCurrentSeason ? ' active' : '');
-            btn.textContent = s.name || `Season ${s.season_number}`;
-            btn.dataset.season = s.season_number;
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.season-tab').forEach(t => t.classList.remove('active'));
-                btn.classList.add('active');
-                _epCurrentSeason = Number(s.season_number);
-                loadEpisodeSeason(_epCurrentSeason);
-            });
-            episodeSeasonTabs.appendChild(btn);
+            const opt = document.createElement('option');
+            opt.value = s.season_number;
+            opt.textContent = s.name || `Season ${s.season_number}`;
+            if (s.season_number === _epCurrentSeason) opt.selected = true;
+            seasonSelect.appendChild(opt);
         });
+
+        seasonSelect.onchange = () => {
+            const chosen = Number(seasonSelect.value);
+            _epCurrentSeason = chosen;
+            loadEpisodeSeason(chosen);
+        };
 
         // Load the currently playing season
         loadEpisodeSeason(_epCurrentSeason);
