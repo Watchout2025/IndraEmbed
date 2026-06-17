@@ -3271,11 +3271,17 @@ let _epSeasonCache    = {}; // season number → episode array
 
 function openEpisodePanel() {
     const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
-    if (!tvMatch) return;
 
-    const seriesId     = tvMatch[1];
-    const seasonNumber = Number(tvMatch[2]);
-    const epNumber     = Number(tvMatch[3]);
+    // Also support ?tmdb=, ?season=, ?episode= query params (used when path routing isn't active)
+    const params       = new URLSearchParams(window.location.search);
+    const seriesId     = tvMatch ? tvMatch[1]       : params.get('tmdb');
+    const seasonNumber = tvMatch ? Number(tvMatch[2]) : Number(params.get('season') || 1);
+    const epNumber     = tvMatch ? Number(tvMatch[3]) : Number(params.get('episode') || 1);
+
+    if (!seriesId) {
+        // Not a TV route — button should be hidden, but guard anyway
+        return;
+    }
 
     episodePanel.classList.add('open');
     episodePanelBackdrop.classList.add('open');
@@ -3331,9 +3337,10 @@ async function fetchSeriesInfo(seriesId) {
         episodePanelTitle.textContent = _epSeriesName || 'Episodes';
 
         // Build season selector dropdown (skip season 0 / specials unless only option)
-        const seasons = (data.seasons || []).filter(s => s.season_number > 0);
-        if (!seasons.length && data.number_of_seasons) {
-            for (let i = 1; i <= data.number_of_seasons; i++) seasons.push({ season_number: i, name: `Season ${i}` });
+        let seasons = (data.seasons || []).filter(s => s.season_number > 0);
+        if (!seasons.length) {
+            const total = data.number_of_seasons || 1;
+            for (let i = 1; i <= total; i++) seasons.push({ season_number: i, name: `Season ${i}` });
         }
 
         seasonSelect.innerHTML = '';
@@ -3341,9 +3348,15 @@ async function fetchSeriesInfo(seriesId) {
             const opt = document.createElement('option');
             opt.value = s.season_number;
             opt.textContent = s.name || `Season ${s.season_number}`;
-            if (s.season_number === _epCurrentSeason) opt.selected = true;
+            if (Number(s.season_number) === Number(_epCurrentSeason)) opt.selected = true;
             seasonSelect.appendChild(opt);
         });
+
+        // Ensure the select actually shows the right season (fallback if none matched)
+        if (!seasonSelect.value && seasons.length) {
+            seasonSelect.value = seasons[0].season_number;
+            _epCurrentSeason   = Number(seasons[0].season_number);
+        }
 
         seasonSelect.onchange = () => {
             const chosen = Number(seasonSelect.value);
@@ -3354,9 +3367,10 @@ async function fetchSeriesInfo(seriesId) {
         // Load the currently playing season
         loadEpisodeSeason(_epCurrentSeason);
     } catch (e) {
-        console.warn('[EpisodePanel] fetchSeriesInfo failed:', e.message);
+        console.error('[EpisodePanel] fetchSeriesInfo failed:', e);
         episodePanelLoading.style.display = 'none';
         episodePanelError.style.display   = 'flex';
+        episodePanelError.textContent     = `Could not load season list: ${e.message}`;
     }
 }
 
@@ -3490,7 +3504,8 @@ episodePanelBackdrop.addEventListener('click', closeEpisodePanel);
 
 // Hide episode panel button on movie routes; show on TV
 function updateEpisodePanelButtonVisibility() {
-    const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname);
+    const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname)
+              || new URLSearchParams(window.location.search).has('tmdb');
     episodePanelButton.classList.toggle('hidden', !isTv);
 }
 
