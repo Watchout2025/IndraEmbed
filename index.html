@@ -2200,9 +2200,13 @@ function setupUIControls() {
         hideLoader();
     });
 
-    // Next Episode button — only shown on TV routes, re-evaluated on each episode change
+    // Next Episode / Next Channel button — re-evaluated on each episode/channel change
     const nextEpisodeButton = document.getElementById('next-episode-button');
     nextEpisodeButton.addEventListener('click', () => {
+        if (_iptvActive) {
+            playNextChannel();
+            return;
+        }
         const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
         if (!tvMatch) return;
         playEpisode(tvMatch[1], Number(tvMatch[2]), Number(tvMatch[3]) + 1);
@@ -2215,9 +2219,19 @@ function setupUIControls() {
 /* -------------------------------------------------------------------------
    NEXT EPISODE BUTTON VISIBILITY  –  called on each episode change
    Hides the button if the next episode key is absent from the season JSON.
+   In IPTV mode, the button instead advances to the next channel and is
+   shown whenever 2+ channels are loaded.
    ------------------------------------------------------------------------- */
 async function updateNextEpisodeButtonVisibility() {
     const nextEpisodeButton = document.getElementById('next-episode-button');
+
+    if (_iptvActive) {
+        nextEpisodeButton.title = 'Next Channel';
+        nextEpisodeButton.classList.toggle('hidden', _iptvChannels.length < 2);
+        return;
+    }
+    nextEpisodeButton.title = 'Next Episode';
+
     const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
 
     if (!tvMatch) {
@@ -2604,7 +2618,8 @@ async function playEpisode(seriesId, seasonNumber, episodeNumber) {
    START  –  Route dispatcher
              Movie:    /movie/{tmdbId}
              TV:       /tv/{tmdbId}/S{season}/E{episode}
-             Fallback: ?url=  or hardcoded default
+             Fallback: ?url=  (direct video, HLS stream, or M3U channel
+                       playlist — detected automatically) or hardcoded default
    ------------------------------------------------------------------------- */
 async function resolveAndPlay() {
     const path = window.location.pathname;
@@ -2619,18 +2634,60 @@ async function resolveAndPlay() {
         return playEpisode(tvMatch[1], tvMatch[2], tvMatch[3]);
     }
 
-    /* IPTV playlist: ?playlist=<m3u/m3u8 url> */
-    const playlistUrl = urlParams.get('playlist');
-    if (playlistUrl) {
-        return initIptvPlaylist(playlistUrl);
-    }
-
     /* Fallback: ?url= query param or hardcoded default */
     const hlsUrl =
         urlParams.get('url') ||
         'https://vidmmo.com/hls/ZDBtrL1WMPQipj3EubEdG6tAKeYJ0Nt3/master.m3u8';
 
-    initHlsPlayer(hlsUrl);
+    loadUrlOrPlaylist(hlsUrl);
+}
+
+/* -------------------------------------------------------------------------
+   ?url= DISPATCHER  –  decides whether the URL is:
+     1. A blob: URL (local file dropped/selected)            -> direct play
+     2. A direct video file (mp4/webm/etc, by extension)      -> direct play
+     3. An M3U/M3U8 channel PLAYLIST (multiple #EXTINF lines) -> channel mode
+     4. A single HLS stream (.m3u8 manifest, one stream)      -> hls.js play
+   M3U8 is ambiguous by extension alone (both a single HLS manifest and a
+   multi-channel playlist use it), so for non-direct-video, non-blob URLs we
+   fetch the text and sniff its contents before deciding.
+   ------------------------------------------------------------------------- */
+async function loadUrlOrPlaylist(url) {
+    if (isDirectVideoUrl(url)) {
+        return initHlsPlayer(url);
+    }
+
+    try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+
+        if (isM3UPlaylist(text)) {
+            return initIptvPlaylist(url, text);
+        }
+
+        // Not a multi-channel playlist — treat as a normal HLS manifest.
+        // hls.js will fetch it again internally, which is fine (cheap, cached).
+        return initHlsPlayer(url);
+    } catch (e) {
+        // If sniffing fails for any reason (CORS, network, etc.) fall back to
+        // letting hls.js/the video element try to load it directly, since
+        // that's the pre-existing behavior and may still work (e.g. some HLS
+        // hosts block plain fetch() but allow video/hls.js requests).
+        console.warn('[loadUrlOrPlaylist] Sniff failed, falling back to direct play:', e.message);
+        return initHlsPlayer(url);
+    }
+}
+
+// A playlist has 2+ #EXTINF entries (a single-stream .m3u8 manifest uses
+// #EXTINF too, but only ever has exactly one — for its one segment list —
+// or none at all in master playlists).
+function isM3UPlaylist(text) {
+    const extinfCount = (text.match(/^#EXTINF/gm) || []).length;
+    const hasStreamInf = /^#EXT-X-STREAM-INF/m.test(text);   // HLS master playlist marker
+    const hasTargetDuration = /^#EXT-X-TARGETDURATION/m.test(text); // HLS media playlist marker
+    if (hasStreamInf || hasTargetDuration) return false; // definitely a real HLS manifest
+    return extinfCount >= 2;
 }
 
 /* -------------------------------------------------------------------------
@@ -3661,15 +3718,19 @@ function parseM3U(text) {
     return channels;
 }
 
-async function initIptvPlaylist(playlistUrl) {
+async function initIptvPlaylist(playlistUrl, playlistText) {
     _iptvActive = true;
     showLoader();
     episodePanelButton.classList.remove('hidden');
 
     try {
-        const res = await fetch(playlistUrl, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
+        const text = playlistText !== undefined
+            ? playlistText
+            : await (async () => {
+                const res = await fetch(playlistUrl, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.text();
+            })();
         const channels = parseM3U(text);
 
         if (!channels.length) {
@@ -3707,6 +3768,17 @@ function playChannel(index) {
     document.title = channel.name;
 
     initHlsPlayer(channel.url);
+}
+
+// Advances to the next channel in the full list, wrapping around to the
+// first channel after the last one. Always cycles the full channel list
+// regardless of any group filter currently applied in the panel, so the
+// button's behavior stays predictable even when the panel is closed.
+function playNextChannel() {
+    if (_iptvChannels.length < 2) return;
+    const nextIndex = (_iptvPlayingIndex + 1) % _iptvChannels.length;
+    playChannel(nextIndex);
+    if (episodePanel.classList.contains('open')) renderChannelList();
 }
 
 function openChannelPanel() {
