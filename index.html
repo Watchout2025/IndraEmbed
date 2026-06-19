@@ -1636,9 +1636,11 @@ function renderTracksMenu() {
     // Map each textTrack to its source by cross-referencing <track> elements
     const trackElements = Array.from(video.querySelectorAll('track'));
     function getTrackSource(textTrack) {
-        const el = trackElements.find(el =>
-            el.label === textTrack.label && el.srclang === textTrack.language
-        );
+        // Use the native HTMLTrackElement.track reference instead of matching by
+        // label+srclang — two different sources (e.g. Wyzie + Cloudinary) can both
+        // be "English"/"en", and label/srclang matching would always resolve to
+        // whichever <track> element happens to be first in the DOM, mislabeling both.
+        const el = trackElements.find(el => el.track === textTrack);
         if (!el) return 'hls';
         if (el.hasAttribute('data-wyzie'))  return 'wyzie';
         if (el.hasAttribute('data-github')) return 'github';
@@ -1698,7 +1700,7 @@ function renderTracksMenu() {
 
             // Detect if this is a Wyzie lazy (not-yet-downloaded) track
             const trackEl = Array.from(video.querySelectorAll('track[data-wyzie]'))
-                .find(el => el.label === track.label && el.srclang === track.language);
+                .find(el => el.track === track);
             const isLazy = trackEl && trackEl.hasAttribute('data-lazy-url');
 
             const li = document.createElement('li');
@@ -1773,8 +1775,7 @@ function handleTrackSelection(type, idx, hlsIdx) {
         ? trackElements.find(el =>
             el.hasAttribute('data-wyzie') &&
             el.hasAttribute('data-lazy-url') &&
-            el.label === targetTextTrack.label &&
-            el.srclang === targetTextTrack.language)
+            el.track === targetTextTrack)
         : null;
 
     if (matchingEl) {
@@ -2853,7 +2854,7 @@ async function loadSubtitlesFromWyzie(type, id, season, episode) {
                 .filter(t => t.kind === 'subtitles' || t.kind === 'captions')
                 .forEach(t => {
                     const el = Array.from(video.querySelectorAll('track[data-wyzie]'))
-                        .find(el => el.label === t.label && el.srclang === t.language);
+                        .find(el => el.track === t);
                     if (el && el.hasAttribute('data-lazy-url')) t.mode = 'disabled';
                 });
 
