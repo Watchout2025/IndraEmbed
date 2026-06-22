@@ -479,71 +479,6 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        /* ---- IPTV channel list (reuses .episode-item structure) ---- */
-        .channel-logo-wrapper {
-            position: relative;
-            width: 63px;
-            min-width: 63px;
-            height: 63px;
-            flex-shrink: 0;
-            border-radius: 3px;
-            background: #2a2a2a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .channel-logo-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #1a1a1a;
-        }
-        .channel-logo-fallback {
-            color: #777;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-            padding: 4px;
-            line-height: 1.2;
-        }
-        .channel-item .episode-thumb-play svg { width: 22px; height: 22px; }
-        .channel-live-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            color: rgb(225,0,0);
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            flex-shrink: 0;
-        }
-        .channel-live-badge::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: rgb(225,0,0);
-        }
-        #channel-search-wrapper {
-            padding: 12px 20px 12px;
-        }
-        #channel-search {
-            width: 100%;
-            box-sizing: border-box;
-            background: #2a2a2a;
-            border: 1px solid #3a3a3a;
-            border-radius: 4px;
-            color: #fff;
-            font-family: 'Netflix Sans', sans-serif;
-            font-size: 14px;
-            padding: 9px 14px;
-            outline: none;
-            transition: border-color 0.15s;
-        }
-        #channel-search:hover { border-color: #666; }
-        #channel-search:focus { border-color: rgb(225,0,0); }
-        #channel-search::placeholder { color: #777; }
         #episode-panel-loading {
             display: flex;
             align-items: center;
@@ -1193,9 +1128,6 @@
                 <option value="">Loading seasons…</option>
             </select>
         </div>
-        <div id="channel-search-wrapper" class="hidden">
-            <input id="channel-search" type="text" placeholder="Search channels…" autocomplete="off">
-        </div>
         <div id="episode-list-container">
             <div id="episode-panel-loading">
                 <svg style="animation:spin 1s linear infinite;flex-shrink:0" width="18" height="18" viewBox="0 0 24 24" fill="none"><path opacity="0.3" d="M12 2a10 10 0 1 0 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -1450,6 +1382,8 @@ function showControls() {
     bottomOverlay.classList.add('controls-visible');
     centerPlayPauseOverlay.classList.remove('opacity-0','pointer-events-none');
     centerPlayPauseOverlay.classList.add('opacity-100','pointer-events-auto');
+    document.querySelectorAll('.player-timedtext-text-container')
+        .forEach(el => el.style.bottom = '14%');
 }
 function hideControls() {
     if (audioSubtitleMenu.classList.contains('hidden') && speedQualityMenu.classList.contains('hidden')) {
@@ -1457,6 +1391,8 @@ function hideControls() {
         bottomOverlay.classList.add('controls-hidden');
         centerPlayPauseOverlay.classList.remove('opacity-100','pointer-events-auto');
         centerPlayPauseOverlay.classList.add('opacity-0','pointer-events-none');
+        document.querySelectorAll('.player-timedtext-text-container')
+        .forEach(el => el.style.bottom = '10%');
     }
 }
 function updateBottomPlayPauseIcon(paused) {
@@ -2200,13 +2136,9 @@ function setupUIControls() {
         hideLoader();
     });
 
-    // Next Episode / Next Channel button — re-evaluated on each episode/channel change
+    // Next Episode button — only shown on TV routes, re-evaluated on each episode change
     const nextEpisodeButton = document.getElementById('next-episode-button');
     nextEpisodeButton.addEventListener('click', () => {
-        if (_iptvActive) {
-            playNextChannel();
-            return;
-        }
         const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
         if (!tvMatch) return;
         playEpisode(tvMatch[1], Number(tvMatch[2]), Number(tvMatch[3]) + 1);
@@ -2219,19 +2151,9 @@ function setupUIControls() {
 /* -------------------------------------------------------------------------
    NEXT EPISODE BUTTON VISIBILITY  –  called on each episode change
    Hides the button if the next episode key is absent from the season JSON.
-   In IPTV mode, the button instead advances to the next channel and is
-   shown whenever 2+ channels are loaded.
    ------------------------------------------------------------------------- */
 async function updateNextEpisodeButtonVisibility() {
     const nextEpisodeButton = document.getElementById('next-episode-button');
-
-    if (_iptvActive) {
-        nextEpisodeButton.title = 'Next Channel';
-        nextEpisodeButton.classList.toggle('hidden', _iptvChannels.length < 2);
-        return;
-    }
-    nextEpisodeButton.title = 'Next Episode';
-
     const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
 
     if (!tvMatch) {
@@ -2618,8 +2540,7 @@ async function playEpisode(seriesId, seasonNumber, episodeNumber) {
    START  –  Route dispatcher
              Movie:    /movie/{tmdbId}
              TV:       /tv/{tmdbId}/S{season}/E{episode}
-             Fallback: ?url=  (direct video, HLS stream, or M3U channel
-                       playlist — detected automatically) or hardcoded default
+             Fallback: ?url=  or hardcoded default
    ------------------------------------------------------------------------- */
 async function resolveAndPlay() {
     const path = window.location.pathname;
@@ -2639,55 +2560,7 @@ async function resolveAndPlay() {
         urlParams.get('url') ||
         'https://vidmmo.com/hls/ZDBtrL1WMPQipj3EubEdG6tAKeYJ0Nt3/master.m3u8';
 
-    loadUrlOrPlaylist(hlsUrl);
-}
-
-/* -------------------------------------------------------------------------
-   ?url= DISPATCHER  –  decides whether the URL is:
-     1. A blob: URL (local file dropped/selected)            -> direct play
-     2. A direct video file (mp4/webm/etc, by extension)      -> direct play
-     3. An M3U/M3U8 channel PLAYLIST (multiple #EXTINF lines) -> channel mode
-     4. A single HLS stream (.m3u8 manifest, one stream)      -> hls.js play
-   M3U8 is ambiguous by extension alone (both a single HLS manifest and a
-   multi-channel playlist use it), so for non-direct-video, non-blob URLs we
-   fetch the text and sniff its contents before deciding.
-   ------------------------------------------------------------------------- */
-async function loadUrlOrPlaylist(url) {
-    if (isDirectVideoUrl(url)) {
-        return initHlsPlayer(url);
-    }
-
-    try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-
-        if (isM3UPlaylist(text)) {
-            return initIptvPlaylist(url, text);
-        }
-
-        // Not a multi-channel playlist — treat as a normal HLS manifest.
-        // hls.js will fetch it again internally, which is fine (cheap, cached).
-        return initHlsPlayer(url);
-    } catch (e) {
-        // If sniffing fails for any reason (CORS, network, etc.) fall back to
-        // letting hls.js/the video element try to load it directly, since
-        // that's the pre-existing behavior and may still work (e.g. some HLS
-        // hosts block plain fetch() but allow video/hls.js requests).
-        console.warn('[loadUrlOrPlaylist] Sniff failed, falling back to direct play:', e.message);
-        return initHlsPlayer(url);
-    }
-}
-
-// A playlist has 2+ #EXTINF entries (a single-stream .m3u8 manifest uses
-// #EXTINF too, but only ever has exactly one — for its one segment list —
-// or none at all in master playlists).
-function isM3UPlaylist(text) {
-    const extinfCount = (text.match(/^#EXTINF/gm) || []).length;
-    const hasStreamInf = /^#EXT-X-STREAM-INF/m.test(text);   // HLS master playlist marker
-    const hasTargetDuration = /^#EXT-X-TARGETDURATION/m.test(text); // HLS media playlist marker
-    if (hasStreamInf || hasTargetDuration) return false; // definitely a real HLS manifest
-    return extinfCount >= 2;
+    initHlsPlayer(hlsUrl);
 }
 
 /* -------------------------------------------------------------------------
@@ -3409,7 +3282,6 @@ let _epSeriesName     = '';
 let _epSeasonCache    = {}; // season number → episode array
 
 function openEpisodePanel() {
-    document.getElementById('channel-search-wrapper').classList.add('hidden');
     const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
     if (!tvMatch) return;
 
@@ -3639,8 +3511,6 @@ episodePanelButton.addEventListener('click', e => {
     e.stopPropagation();
     if (episodePanel.classList.contains('open')) {
         closeEpisodePanel();
-    } else if (_iptvActive) {
-        openChannelPanel();
     } else {
         openEpisodePanel();
     }
@@ -3648,269 +3518,10 @@ episodePanelButton.addEventListener('click', e => {
 episodePanelClose.addEventListener('click', closeEpisodePanel);
 episodePanelBackdrop.addEventListener('click', closeEpisodePanel);
 
-// Hide episode panel button on movie routes; show on TV or IPTV playlist mode
+// Hide episode panel button on movie routes; show on TV
 function updateEpisodePanelButtonVisibility() {
     const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname);
-    episodePanelButton.classList.toggle('hidden', !isTv && !_iptvActive);
-    episodePanelButton.title = _iptvActive ? 'Channels' : 'Episodes';
-}
-
-/* =========================================================================
-   IPTV PLAYLIST MODE
-   Triggered by ?playlist=<m3u/m3u8 url>. Parses an M3U channel list and
-   reuses the episode panel UI (season selector -> group/category selector,
-   episode list -> channel list) to let the user browse and switch channels.
-   ========================================================================= */
-let _iptvActive       = false;
-let _iptvChannels      = [];   // [{name, url, logo, group, id}]
-let _iptvGroups        = [];   // sorted unique group-titles
-let _iptvCurrentGroup  = '';   // '' = All channels
-let _iptvPlayingIndex  = -1;   // index into _iptvChannels currently playing
-let _iptvPlaylistTitle = 'Channels';
-let _iptvSearchTerm    = '';
-
-function parseM3U(text) {
-    const lines = text.split(/\r?\n/);
-    const channels = [];
-    let pendingInfo = null;
-
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        if (line.startsWith('#EXTINF')) {
-            const attrs = {};
-            const attrRegex = /([a-zA-Z0-9_-]+)="([^"]*)"/g;
-            let m;
-            while ((m = attrRegex.exec(line)) !== null) {
-                attrs[m[1].toLowerCase()] = m[2];
-            }
-            const nameMatch = line.match(/,(.*)$/);
-            const displayName = nameMatch ? nameMatch[1].trim() : (attrs['tvg-name'] || 'Unknown channel');
-
-            pendingInfo = {
-                name: attrs['tvg-name'] || displayName || 'Unknown channel',
-                displayName,
-                logo: attrs['tvg-logo'] || '',
-                id: attrs['tvg-id'] || '',
-                group: attrs['group-title'] || ''
-            };
-            continue;
-        }
-
-        if (line.startsWith('#')) continue; // other directives (#EXTM3U, #EXTVLCOPT, etc.)
-
-        // This is a URL line
-        if (pendingInfo) {
-            channels.push({
-                name: pendingInfo.displayName || pendingInfo.name,
-                logo: pendingInfo.logo,
-                id: pendingInfo.id,
-                group: pendingInfo.group,
-                url: line
-            });
-            pendingInfo = null;
-        } else {
-            // URL with no preceding #EXTINF — still playable, just unnamed
-            channels.push({ name: line.split('/').pop() || 'Channel', logo: '', id: '', group: '', url: line });
-        }
-    }
-    return channels;
-}
-
-async function initIptvPlaylist(playlistUrl, playlistText) {
-    _iptvActive = true;
-    showLoader();
-    episodePanelButton.classList.remove('hidden');
-
-    try {
-        const text = playlistText !== undefined
-            ? playlistText
-            : await (async () => {
-                const res = await fetch(playlistUrl, { cache: 'no-store' });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.text();
-            })();
-        const channels = parseM3U(text);
-
-        if (!channels.length) {
-            displayError('Playlist contained no playable channels.');
-            hideLoader();
-            return;
-        }
-
-        _iptvChannels = channels;
-        _iptvGroups = Array.from(new Set(channels.map(c => c.group).filter(Boolean))).sort();
-
-        try {
-            _iptvPlaylistTitle = decodeURIComponent(playlistUrl.split('/').pop().replace(/\.(m3u8?|m3u)$/i, '').replace(/[-_]/g, ' ')) || 'Channels';
-        } catch (e) {
-            _iptvPlaylistTitle = 'Channels';
-        }
-
-        playChannel(0);
-    } catch (e) {
-        displayError(`Failed to load playlist: ${e.message}`);
-        hideLoader();
-    }
-}
-
-function playChannel(index) {
-    if (index < 0 || index >= _iptvChannels.length) return;
-    _revokeAllSubtitleBlobs();
-    const channel = _iptvChannels[index];
-    _iptvPlayingIndex = index;
-
-    const t1 = document.getElementById('title-main-text');
-    const t2 = document.getElementById('mobile-title-main');
-    if (t1) t1.textContent = channel.name;
-    if (t2) t2.textContent = channel.name;
-    document.title = channel.name;
-
-    initHlsPlayer(channel.url);
-}
-
-// Advances to the next channel in the full list, wrapping around to the
-// first channel after the last one. Always cycles the full channel list
-// regardless of any group filter currently applied in the panel, so the
-// button's behavior stays predictable even when the panel is closed.
-function playNextChannel() {
-    if (_iptvChannels.length < 2) return;
-    const nextIndex = (_iptvPlayingIndex + 1) % _iptvChannels.length;
-    playChannel(nextIndex);
-    if (episodePanel.classList.contains('open')) renderChannelList();
-}
-
-function openChannelPanel() {
-    episodePanel.classList.add('open');
-    episodePanelBackdrop.classList.add('open');
-    clearTimeout(inactivityTimer);
-    audioSubtitleMenu.classList.add('hidden');
-    speedQualityMenu.classList.add('hidden');
-
-    episodePanelTitle.textContent = _iptvPlaylistTitle;
-
-    // Swap season selector into a group/category selector
-    document.getElementById('channel-search-wrapper').classList.remove('hidden');
-    const searchInput = document.getElementById('channel-search');
-    searchInput.value = _iptvSearchTerm;
-    searchInput.oninput = () => {
-        _iptvSearchTerm = searchInput.value.trim().toLowerCase();
-        renderChannelList();
-    };
-
-    seasonSelect.innerHTML = '';
-    const allOpt = document.createElement('option');
-    allOpt.value = '';
-    allOpt.textContent = `All Channels (${_iptvChannels.length})`;
-    seasonSelect.appendChild(allOpt);
-    _iptvGroups.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g;
-        opt.textContent = g;
-        seasonSelect.appendChild(opt);
-    });
-    seasonSelect.value = _iptvCurrentGroup;
-    seasonSelect.onchange = () => {
-        _iptvCurrentGroup = seasonSelect.value;
-        renderChannelList();
-    };
-
-    renderChannelList();
-}
-
-function renderChannelList() {
-    episodePanelLoading.style.display = 'none';
-    episodePanelError.style.display   = 'none';
-    episodeList.innerHTML = '';
-
-    let filtered = _iptvChannels
-        .map((c, idx) => ({ ...c, idx }))
-        .filter(c => !_iptvCurrentGroup || c.group === _iptvCurrentGroup)
-        .filter(c => !_iptvSearchTerm || c.name.toLowerCase().includes(_iptvSearchTerm));
-
-    if (!filtered.length) {
-        episodeList.innerHTML = '<li style="padding:20px;color:#b3b3b3;font-size:14px;">No channels found.</li>';
-        return;
-    }
-
-    filtered.forEach(ch => {
-        const isActive = ch.idx === _iptvPlayingIndex;
-
-        const li = document.createElement('li');
-        li.className = 'episode-item channel-item' + (isActive ? ' active' : '');
-
-        const logoWrapper = document.createElement('div');
-        logoWrapper.className = 'channel-logo-wrapper';
-
-        if (ch.logo) {
-            const img = document.createElement('img');
-            img.alt = ch.name;
-            img.loading = 'lazy';
-            img.src = ch.logo;
-            img.onerror = () => {
-                img.remove();
-                const fallback = document.createElement('div');
-                fallback.className = 'channel-logo-fallback';
-                fallback.textContent = ch.name.slice(0, 3).toUpperCase();
-                logoWrapper.appendChild(fallback);
-            };
-            logoWrapper.appendChild(img);
-        } else {
-            const fallback = document.createElement('div');
-            fallback.className = 'channel-logo-fallback';
-            fallback.textContent = ch.name.slice(0, 3).toUpperCase();
-            logoWrapper.appendChild(fallback);
-        }
-
-        const playOverlay = document.createElement('div');
-        playOverlay.className = 'episode-thumb-play';
-        playOverlay.innerHTML = `<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5 2.7a1 1 0 0 1 1.48-.88l16.93 9.3a1 1 0 0 1 0 1.76l-16.93 9.3A1 1 0 0 1 5 21.31z"/></svg>`;
-        logoWrapper.appendChild(playOverlay);
-        li.appendChild(logoWrapper);
-
-        const info = document.createElement('div');
-        info.className = 'episode-info';
-
-        const numTitle = document.createElement('div');
-        numTitle.className = 'episode-num-title';
-
-        const name = document.createElement('span');
-        name.className = 'episode-name';
-        name.textContent = ch.name;
-        numTitle.appendChild(name);
-        info.appendChild(numTitle);
-
-        if (ch.group) {
-            const groupLabel = document.createElement('p');
-            groupLabel.className = 'episode-overview';
-            groupLabel.style.webkitLineClamp = '1';
-            groupLabel.textContent = ch.group;
-            info.appendChild(groupLabel);
-        }
-
-        li.appendChild(info);
-
-        if (isActive) {
-            const badge = document.createElement('span');
-            badge.className = 'channel-live-badge';
-            badge.textContent = 'LIVE';
-            li.appendChild(badge);
-        }
-
-        li.addEventListener('click', () => {
-            if (isActive) { closeEpisodePanel(); return; }
-            playChannel(ch.idx);
-            renderChannelList();
-        });
-
-        episodeList.appendChild(li);
-    });
-
-    requestAnimationFrame(() => {
-        const activeEl = episodeList.querySelector('.episode-item.active');
-        if (activeEl) activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    });
+    episodePanelButton.classList.toggle('hidden', !isTv);
 }
 
 window.onload = () => {
