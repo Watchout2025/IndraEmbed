@@ -2154,7 +2154,8 @@ function setupUIControls() {
    ------------------------------------------------------------------------- */
 async function updateNextEpisodeButtonVisibility() {
     const nextEpisodeButton = document.getElementById('next-episode-button');
-    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i)
+                 || window.location.pathname.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
 
     if (!tvMatch) {
         nextEpisodeButton.classList.add('hidden');
@@ -2550,7 +2551,8 @@ async function resolveAndPlay() {
         return playMovie(movieMatch[1]);
     }
 
-    const tvMatch = path.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    const tvMatch = path.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i)
+                 || path.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
     if (tvMatch) {
         return playEpisode(tvMatch[1], tvMatch[2], tvMatch[3]);
     }
@@ -3520,13 +3522,15 @@ episodePanelBackdrop.addEventListener('click', closeEpisodePanel);
 
 // Hide episode panel button on movie routes; show on TV
 function updateEpisodePanelButtonVisibility() {
-    const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname);
+    const isTv = /\/tv\/\d+\/S\d+\/E\d+/i.test(window.location.pathname)
+              || /\/tv\/\d+\/\d+\/\d+/.test(window.location.pathname);
     episodePanelButton.classList.toggle('hidden', !isTv);
 }
 
 window.onload = () => {
     // Seed playing state from URL so episode panel works correctly on first open
-    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i);
+    const tvMatch = window.location.pathname.match(/\/tv\/(\d+)\/S(\d+)\/E(\d+)/i)
+                 || window.location.pathname.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
     if (tvMatch) {
         _epSeriesId       = tvMatch[1];
         _epPlayingSeason  = Number(tvMatch[2]);
