@@ -1139,13 +1139,13 @@
     </div>
 
     <!-- Evidence Overlay (Netflix-style pause info) -->
-    <div id="evidence-overlay" style="display:none;position:relative;width:100%;height:100%;z-index:22;opacity:0;transition:opacity 0.4s ease;pointer-events:none;background-color:rgba(0,0,0,0.5);">
-        <div class="medium" data-uia="evidence-overlay" style="position:absolute;bottom:90px;left:24px;max-width:380px;background:linear-gradient(to right,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0) 100%);padding:20px 40px 20px 0;border-radius:4px;">
+    <div id="evidence-overlay" style="display:none;position:absolute;inset:0;z-index:22;opacity:0;transition:opacity 0.4s ease;pointer-events:none;background-color:rgba(0,0,0,0.5);width:100%;height:100%;">
+        <div style="position:absolute;bottom:90px;left:24px;max-width:380px;background:linear-gradient(to right,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0) 100%);padding:20px 40px 20px 0;border-radius:4px;">
             <span id="ev-watching" style="display:block;color:#b3b3b3;font-size:13px;font-weight:400;margin-bottom:6px;font-family:'Netflix Sans',sans-serif;">You're watching</span>
             <h2 id="ev-title" style="color:#fff;font-size:22px;font-weight:700;margin:0 0 4px;font-family:'Netflix Sans',sans-serif;line-height:1.2;"></h2>
-            <h4 id="ev-season" data-uia="evidence-overlay-season-title" style="color:#b3b3b3;font-size:13px;font-weight:400;margin:0 0 2px;font-family:'Netflix Sans',sans-serif;display:none;"></h4>
-            <h3 id="ev-episode" data-uia="evidence-overlay-episode-title" style="color:#fff;font-size:14px;font-weight:600;margin:0 0 8px;font-family:'Netflix Sans',sans-serif;display:none;"></h3>
-            <p id="ev-synopsis" data-uia="evidence-overlay-synopsis" style="color:#ccc;font-size:13px;line-height:1.5;margin:0 0 10px;font-family:'Netflix Sans',sans-serif;display:none;max-width:340px;"></p>
+            <h4 id="ev-season" style="color:#b3b3b3;font-size:13px;font-weight:400;margin:0 0 2px;font-family:'Netflix Sans',sans-serif;display:none;"></h4>
+            <h3 id="ev-episode" style="color:#fff;font-size:14px;font-weight:600;margin:0 0 8px;font-family:'Netflix Sans',sans-serif;display:none;"></h3>
+            <p id="ev-synopsis" style="color:#ccc;font-size:13px;line-height:1.5;margin:0 0 10px;font-family:'Netflix Sans',sans-serif;display:none;max-width:340px;"></p>
             <span id="ev-paused" style="color:#b3b3b3;font-size:12px;font-weight:500;font-family:'Netflix Sans',sans-serif;">Paused</span>
         </div>
     </div>
