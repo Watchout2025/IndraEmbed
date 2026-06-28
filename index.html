@@ -2163,14 +2163,17 @@ function setupUIControls() {
     const evOverlay = document.getElementById('evidence-overlay');
     let _evTimer = null;
     function showEvidenceOverlay() {
-        evOverlay.style.display = 'block';
         clearTimeout(_evTimer);
-        _evTimer = setTimeout(() => { evOverlay.style.opacity = '1'; }, 50);
+        _evTimer = setTimeout(() => {
+            if (!video.paused) return;
+            evOverlay.style.display = 'block';
+            requestAnimationFrame(() => { evOverlay.style.opacity = '1'; });
+        }, 10000);
     }
     function hideEvidenceOverlay() {
-        evOverlay.style.opacity = '0';
         clearTimeout(_evTimer);
-        _evTimer = setTimeout(() => { evOverlay.style.display = 'none'; }, 400);
+        evOverlay.style.opacity = '0';
+        setTimeout(() => { evOverlay.style.display = 'none'; }, 400);
     }
     video.addEventListener('pause', showEvidenceOverlay);
     video.addEventListener('play', hideEvidenceOverlay);
