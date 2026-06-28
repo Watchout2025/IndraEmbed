@@ -2165,7 +2165,7 @@ function setupUIControls() {
     function showEvidenceOverlay() {
         clearTimeout(_evTimer);
         _evTimer = setTimeout(() => {
-            if (!video.paused) return;
+            if (!video.paused || window.innerWidth < 1000) return;
             evOverlay.style.display = 'block';
             requestAnimationFrame(() => { evOverlay.style.opacity = '1'; });
         }, 10000);
