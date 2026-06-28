@@ -1138,6 +1138,18 @@
         </div>
     </div>
 
+    <!-- Evidence Overlay (Netflix-style pause info) -->
+    <div id="evidence-overlay" style="display:none;position:absolute;bottom:90px;left:24px;z-index:22;max-width:380px;opacity:0;transition:opacity 0.4s ease;pointer-events:none;">
+        <div style="background:linear-gradient(to right,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0) 100%);padding:20px 40px 20px 0;border-radius:4px;">
+            <span id="ev-watching" style="display:block;color:#b3b3b3;font-size:13px;font-weight:400;margin-bottom:6px;font-family:'Netflix Sans',sans-serif;">You're watching</span>
+            <h2 id="ev-title" style="color:#fff;font-size:22px;font-weight:700;margin:0 0 4px;font-family:'Netflix Sans',sans-serif;line-height:1.2;"></h2>
+            <h4 id="ev-season" style="color:#b3b3b3;font-size:13px;font-weight:400;margin:0 0 2px;font-family:'Netflix Sans',sans-serif;display:none;"></h4>
+            <h3 id="ev-episode" style="color:#fff;font-size:14px;font-weight:600;margin:0 0 8px;font-family:'Netflix Sans',sans-serif;display:none;"></h3>
+            <p id="ev-synopsis" style="color:#ccc;font-size:13px;line-height:1.5;margin:0 0 10px;font-family:'Netflix Sans',sans-serif;display:none;max-width:340px;"></p>
+            <span id="ev-paused" style="color:#b3b3b3;font-size:12px;font-weight:500;font-family:'Netflix Sans',sans-serif;">Paused</span>
+        </div>
+    </div>
+
     <!-- Report Issue Modal (inside video-container so it works in fullscreen) -->
     <div class="report-modal" id="reportModal">
       <div class="report-modal-box">
@@ -2146,6 +2158,23 @@ function setupUIControls() {
 
     updateNextEpisodeButtonVisibility();
     updateEpisodePanelButtonVisibility();
+
+    // Evidence overlay — show on pause, hide on play
+    const evOverlay = document.getElementById('evidence-overlay');
+    let _evTimer = null;
+    function showEvidenceOverlay() {
+        evOverlay.style.display = 'block';
+        clearTimeout(_evTimer);
+        _evTimer = setTimeout(() => { evOverlay.style.opacity = '1'; }, 50);
+    }
+    function hideEvidenceOverlay() {
+        evOverlay.style.opacity = '0';
+        clearTimeout(_evTimer);
+        _evTimer = setTimeout(() => { evOverlay.style.display = 'none'; }, 400);
+    }
+    video.addEventListener('pause', showEvidenceOverlay);
+    video.addEventListener('play', hideEvidenceOverlay);
+    video.addEventListener('playing', hideEvidenceOverlay);
 }
 
 /* -------------------------------------------------------------------------
@@ -2576,9 +2605,20 @@ async function fetchAndSetTitle(type, id, season, episode) {
             const res = await fetch(`${TMDB_PROXY}/movie/${id}`);
             if (!res.ok) return;
             const data = await res.json();
-            document.getElementById('title-main-text').textContent = data.title || '';
-            document.getElementById('mobile-title-main').textContent = data.title || '';
-            document.title = data.title || document.title;
+            const title = data.title || '';
+            document.getElementById('title-main-text').textContent = title;
+            document.getElementById('mobile-title-main').textContent = title;
+            document.title = title || document.title;
+
+            // Evidence overlay
+            document.getElementById('ev-title').textContent = title;
+            document.getElementById('ev-season').style.display = 'none';
+            document.getElementById('ev-episode').style.display = 'none';
+            const synEl = document.getElementById('ev-synopsis');
+            const synopsis = data.overview || '';
+            if (synopsis) { synEl.textContent = synopsis; synEl.style.display = 'block'; }
+            else synEl.style.display = 'none';
+
         } else if (type === 'tv') {
             const [seriesRes, epRes] = await Promise.all([
                 fetch(`${TMDB_PROXY}/tv/${id}`),
@@ -2594,6 +2634,33 @@ async function fetchAndSetTitle(type, id, season, episode) {
             document.getElementById('title-main-text').textContent = fullTitle;
             document.getElementById('mobile-title-main').textContent = mobileTitle;
             document.title = fullTitle || document.title;
+
+            // Evidence overlay
+            document.getElementById('ev-title').textContent = seriesName;
+
+            // Season label — "Limited Series" if miniseries/single season, else "Season N"
+            const seasonEl = document.getElementById('ev-season');
+            const seasonType = series.type || '';
+            let seasonLabel = '';
+            if (seasonType === 'Miniseries' || Number(series.number_of_seasons) === 1) {
+                seasonLabel = 'Limited Series';
+            } else {
+                const seasonData = (series.seasons || []).find(s => s.season_number === Number(season));
+                seasonLabel = seasonData ? seasonData.name : `Season ${season}`;
+            }
+            if (seasonLabel) { seasonEl.textContent = seasonLabel; seasonEl.style.display = 'block'; }
+            else seasonEl.style.display = 'none';
+
+            // Episode title
+            const epEl = document.getElementById('ev-episode');
+            if (epName) { epEl.textContent = `Episode ${episode}: ${epName}`; epEl.style.display = 'block'; }
+            else epEl.style.display = 'none';
+
+            // Synopsis
+            const synEl = document.getElementById('ev-synopsis');
+            const synopsis = ep.overview || '';
+            if (synopsis) { synEl.textContent = synopsis; synEl.style.display = 'block'; }
+            else synEl.style.display = 'none';
         }
     } catch (e) {
         /* Silently ignore — title is non-critical */
