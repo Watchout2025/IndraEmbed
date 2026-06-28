@@ -1396,6 +1396,13 @@ function showControls() {
     centerPlayPauseOverlay.classList.add('opacity-100','pointer-events-auto');
     document.querySelectorAll('.player-timedtext-text-container')
         .forEach(el => el.style.bottom = '14%');
+    // Hide evidence overlay when controls appear
+    const evOverlay = document.getElementById('evidence-overlay');
+    if (evOverlay) {
+        clearTimeout(window._evTimer);
+        evOverlay.style.opacity = '0';
+        setTimeout(() => { if (!video.paused || window.innerWidth < 1000) evOverlay.style.display = 'none'; }, 400);
+    }
 }
 function hideControls() {
     if (audioSubtitleMenu.classList.contains('hidden') && speedQualityMenu.classList.contains('hidden')) {
@@ -2165,17 +2172,16 @@ function setupUIControls() {
 
     // Evidence overlay — show on pause, hide on play
     const evOverlay = document.getElementById('evidence-overlay');
-    let _evTimer = null;
     function showEvidenceOverlay() {
-        clearTimeout(_evTimer);
-        _evTimer = setTimeout(() => {
+        clearTimeout(window._evTimer);
+        window._evTimer = setTimeout(() => {
             if (!video.paused || window.innerWidth < 1000) return;
             evOverlay.style.display = 'block';
             requestAnimationFrame(() => { evOverlay.style.opacity = '1'; });
         }, 10000);
     }
     function hideEvidenceOverlay() {
-        clearTimeout(_evTimer);
+        clearTimeout(window._evTimer);
         evOverlay.style.opacity = '0';
         setTimeout(() => { evOverlay.style.display = 'none'; }, 400);
     }
