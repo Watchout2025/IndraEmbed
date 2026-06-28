@@ -1419,7 +1419,7 @@ function updateCenterPlayPauseIcon(paused) {
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
     showControls();
-    if (!video.paused && !isSeeking && audioSubtitleMenu.classList.contains('hidden') &&
+    if (!isSeeking && audioSubtitleMenu.classList.contains('hidden') &&
         speedQualityMenu.classList.contains('hidden') && loadingIndicator.classList.contains('hidden')) {
         inactivityTimer = setTimeout(hideControls, INACTIVITY_TIMEOUT);
     }
@@ -2134,7 +2134,11 @@ function setupUIControls() {
         showControls();
         updateBottomPlayPauseIcon(true);
         updateCenterPlayPauseIcon(true);
-        clearTimeout(inactivityTimer);
+        if (window.innerWidth >= 1000) {
+            inactivityTimer = setTimeout(hideControls, INACTIVITY_TIMEOUT);
+        } else {
+            clearTimeout(inactivityTimer);
+        }
     });
     video.addEventListener('play', () => {
         updateBottomPlayPauseIcon(false);
