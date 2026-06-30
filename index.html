@@ -1412,6 +1412,10 @@ function hideControls() {
         centerPlayPauseOverlay.classList.add('opacity-0','pointer-events-none');
         document.querySelectorAll('.player-timedtext-text-container')
         .forEach(el => el.style.bottom = '10%');
+        // Restart evidence overlay timer if video is still paused
+        if (video.paused && typeof window.showEvidenceOverlayTimer === 'function') {
+            window.showEvidenceOverlayTimer();
+        }
     }
 }
 function updateBottomPlayPauseIcon(paused) {
@@ -2180,6 +2184,7 @@ function setupUIControls() {
             requestAnimationFrame(() => { evOverlay.style.opacity = '1'; });
         }, 10000);
     }
+    window.showEvidenceOverlayTimer = showEvidenceOverlay;
     function hideEvidenceOverlay() {
         clearTimeout(window._evTimer);
         evOverlay.style.opacity = '0';
